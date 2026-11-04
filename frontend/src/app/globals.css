@@ -1,1 +1,159 @@
 @import 'tailwindcss';
+
+/* ==========================================================================
+   Iwadu Pharma — design tokens (charte graphique V1.0, validée le 31.10.2026)
+   New code uses ONLY these tokens. The default Tailwind palette stays
+   available solely for the kit pages that have not been redesigned yet.
+   ========================================================================== */
+
+@theme {
+  /* Couleurs de marque et d'interface */
+  --color-brand: #0f927c; /* Vert Iwadu — logo, icônes de marque, grands titres. Jamais un texte courant. */
+  --color-action: #0c7a68; /* Vert d'action — boutons principaux, liens, focus */
+  --color-deep: #0f5f51; /* Vert profond — survol, aplats sombres de marque */
+  --color-ink: #021916; /* Encre — texte principal, fonds de nuit */
+  --color-ivory: #f5f7f3; /* Ivoire — fond des écrans */
+  --color-surface: #ffffff; /* Blanc — cartes, champs, feuilles */
+  --color-mint: #6fdcc0; /* Menthe — accent sur fond sombre uniquement */
+  --color-ink-muted: #4e5f5a; /* Gris texte — texte secondaire */
+  --color-outline: #6f817b; /* Bordure — contours des champs */
+  --color-hairline: #d8e1dc; /* Filet — séparations */
+
+  /* États : toujours couleur + icône + mot, jamais la couleur seule */
+  --color-available: #1e6b34;
+  --color-available-soft: #e4f3e8;
+  --color-low: #8a4b00;
+  --color-low-soft: #fff3d6;
+  --color-unavailable: #4e5f5a;
+  --color-unavailable-soft: #e9eeec;
+  --color-verify: #2458a6;
+  --color-verify-soft: #ebf2ff;
+  --color-on-duty: #6fdcc0;
+  --color-on-duty-soft: #021916;
+  --color-error: #b42318;
+  --color-error-soft: #feeceb;
+
+  /* Rayons : capsule (rounded-full) pour boutons et badges */
+  --radius-field: 0.75rem; /* 12 px — champs */
+  --radius-card: 1rem; /* 16 px — cartes */
+  --radius-sheet: 1.5rem; /* 24 px — feuilles */
+
+  /* Ombre légère sur les cartes (en thème sombre : un filet à la place) */
+  --shadow-card: 0 1px 2px 0 rgb(2 25 22 / 0.05), 0 4px 12px -2px rgb(2 25 22 / 0.06);
+
+  /* Colonne centrale de l'application patient sur ordinateur */
+  --container-patient: 30rem; /* 480 px */
+}
+
+/* Polices auto-hébergées par next/font (variables posées sur <html> dans layout.tsx) */
+@theme inline {
+  --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   Échelle typographique de la charte : une classe = police + graisse +
+   taille + interligne. Montants en chiffres tabulaires.
+   -------------------------------------------------------------------------- */
+@utility type-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 2.25rem;
+}
+@utility type-title-1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.875rem;
+}
+@utility type-title-2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.625rem;
+}
+@utility type-title-3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.5rem;
+}
+@utility type-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+@utility type-body-strong {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+@utility type-body-small {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+@utility type-label {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.25rem;
+}
+@utility type-caption {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+}
+@utility type-overline {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+@utility type-amount-lg {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 2.25rem;
+  font-variant-numeric: tabular-nums;
+}
+@utility type-amount {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem; /* texte courant : 16 px minimum */
+    line-height: 1.5rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 2px;
+  }
+}

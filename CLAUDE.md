@@ -4,6 +4,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > ⚠️ **Do NOT run `/init` on this project.** This CLAUDE.md is shipped with the starter and contains battle-tested invariants (runtime=nodejs enforcement, protected file list, OAuth refusal of `email_verified=false`, advisory-lock withdrawals, outbox pattern, raw-body HMAC ordering, …). Running `/init` would regenerate this file from the codebase and erase those invariants. Claude Code already loads this file automatically at session start — no command needed.
 
+## Iwadu Pharma — read this first
+
+This fork is **Iwadu Pharma** (Gabon): find the pharmacy that has a whole prescription close to the visitor's current position, see the price with or without health insurance, unlock pharmacy names and prices through Mobile Money, then reserve. Web first; the future mobile app will call the same `/api/*`, so this repo is the **single backend**. The kit sections below remain valid; this section adds the product's rules on top.
+
+- **This repository is public.** The product requirements and business documents are confidential and kept outside the repo — never copy their text, plans or figures into it.
+- **Payments: BambooPay** (Airtel Money, Moov Money; XAF, integer francs) behind the `PaymentProvider` interface. Bictorys is slated for removal (it does not cover Gabon).
+- **Local env file is `frontend/.env`**, not `.env.local`: the Prisma CLI only reads `.env`.
+
+### Product rules (non-negotiable)
+
+- **One primary action per screen**: a single `variant="primary"` button.
+- **One journey, one page**: a journey's questions unfold on the same page like a progressive form, never as chained screens.
+- **Nothing hard-coded**: prices, quotas, stock thresholds and delays come from the `settings` table, editable in the back-office without redeploying.
+- **Copy**: French, formal « vous », short sentences that say what to do next, no emoji.
+- **No unlock and no pass activation without a verified BambooPay webhook confirmation** — never from a browser redirect or client-side state.
+- **Fictitious data only for demos**, labelled « Exemple fictif ».
+- **Mobile-first**: designed at 360 px, usable from 320 px; on desktop the patient app sits in a 480 px centre column (`max-w-patient`).
+- **Honesty**: a stock status never relies on colour alone (colour + icon + word — use `StatusBadge`); every stock shows its update time; « Disponibilité à vérifier » is not « Indisponible »; prices are estimates (« Prise en charge déclarée », « Reste à payer estimé », « Montant estimé »).
+- **Light**: lazy-load heavy surfaces (map, pharmacy space, back-office); home page under 300 KB on first load.
+
+### Design system (charte graphique V1.0)
+
+- **Tokens** live in [frontend/src/app/globals.css](frontend/src/app/globals.css) (`@theme`): colours `brand`, `action`, `deep`, `ink`, `ivory`, `surface`, `mint`, `ink-muted`, `outline`, `hairline`; states `available`, `low`, `unavailable`, `verify`, `on-duty`, `error`, each with a `-soft` background; radii `rounded-field` (12 px), `rounded-card` (16 px), `rounded-sheet` (24 px) and `rounded-full` capsules; type scale `type-display`, `type-title-1…3`, `type-body`, `type-body-strong`, `type-body-small`, `type-label`, `type-caption`, `type-overline`, `type-amount-lg`, `type-amount` (one class = font + weight + size + line height). Spacing follows Tailwind's 4 px grid.
+- **New code uses only these tokens** — never the default Tailwind palette (`gray-*`, `emerald-*`…), which survives only in kit pages not yet redesigned.
+- **`text-brand` fails WCAG AA for small text** (3.6–3.9:1): logo, icons and large titles only. Links, focus and buttons use `action`.
+- **Fonts**: Outfit (titles) and Figtree (text, UI, amounts) via `next/font`, self-hosted at build time.
+- **Components**: [src/components/ui/](frontend/src/components/ui/) (`Button`/`ButtonLink`, `StatusBadge`, `Field`, `Message`, `Amount`, `Skeleton`), [src/components/pharmacy/](frontend/src/components/pharmacy/) (`PharmacyCard`, `PriceSummary`), [src/components/brand/Logo.tsx](frontend/src/components/brand/Logo.tsx), [src/components/layout/](frontend/src/components/layout/) (`AppHeader`, `PageColumn`). Visual reference: `/dev/charte` (development only, 404 in production).
+- **Formatting** through [src/lib/format.ts](frontend/src/lib/format.ts): `formatFcfa` (« 12 500 FCFA »), `formatDistance` (« 1,4 km »), `formatClock` (Africa/Libreville, « 14 h 05 »). Never hand-type an amount or a time with a plain space — it can wrap mid-value.
+- **Invisible characters** (U+00A0 no-break space, U+2212 minus): build them with `String.fromCharCode` as `format.ts` does; never type them literally or as `\u` escapes in tool-written files.
+- **Icons**: `lucide-react` (2 px stroke, 24 px), the same set as the charte's SVG kit.
+
 ## What this project is
 
 **A v1-shipped, headless Next.js 16 monolith starter.** Single full-stack app (App Router API Route Handlers + Server Actions + Prisma 5 + Neon + Upstash + Cloudinary + Resend + Bictorys + Sentry). There is no separate Express backend anymore — server logic lives under `frontend/src/app/api/*` and `frontend/src/lib/server/*`. The app **ships only logic** — no UI components — so each fork designs its own UX.

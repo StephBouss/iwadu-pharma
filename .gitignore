@@ -21,3 +21,6 @@ next-env.d.ts
 amp
 node-compile-cache/
 
+# Browser-automation screenshots and snapshots (Playwright MCP)
+.playwright-mcp/
+
