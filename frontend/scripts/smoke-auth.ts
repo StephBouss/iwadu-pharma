@@ -16,9 +16,12 @@
 // env var. Forks that override `COOKIE_PREFIX` must update the regex in
 // csrfFromCookies().
 
+import { pathToFileURL } from 'node:url';
 import { PrismaClient } from '@prisma/client';
 
-const BASE_URL = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
+// `||` (not `??`): `.env.example` ships `SMOKE_BASE_URL=""`, and an empty
+// string must fall back to the default rather than produce relative fetches.
+const BASE_URL = process.env.SMOKE_BASE_URL || 'http://localhost:3000';
 const TEST_EMAIL = `smoke-${Date.now()}@example.test`;
 const TEST_PASSWORD = 'SmokeTestPwd123!';
 
@@ -150,7 +153,9 @@ export async function main(): Promise<number> {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// CLI entrypoint guard. `pathToFileURL` normalises Windows paths (drive
+// letter, backslashes, spaces → %20); a raw `file://${argv[1]}` never matches there.
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main()
     .then((code) => process.exit(code))
     .catch((err) => {
