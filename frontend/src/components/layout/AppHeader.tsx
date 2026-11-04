@@ -1,29 +1,42 @@
 import Link from 'next/link';
 import { User } from 'lucide-react';
 import { Logo } from '@/components/brand/Logo';
+import { GlassPanel } from '@/components/ui/GlassPanel';
+import { cn } from '@/lib/utils';
 
-// En-tête de l'application : symbole sur mobile (planche 3 de la charte),
-// logo horizontal dès 640 px ; accès au compte à droite. Cibles de 48 px.
+// Maquette Banani « App Header » : panneau en verre, logo horizontal, rappel
+// du contexte (« Près de votre position · Louis ») et accès au compte.
+// Cibles tactiles de 48 px ; le rond visible du compte fait 32 px.
 
-export function AppHeader() {
+export interface AppHeaderProps {
+  /** Contexte affiché à droite ; passe sur 2 lignes plutôt que d'être coupé. */
+  subtitle?: string | undefined;
+  className?: string | undefined;
+}
+
+export function AppHeader({ subtitle, className }: AppHeaderProps) {
   return (
-    <header className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
-      <Link
-        href="/"
-        aria-label="Iwadu Pharma, accueil"
-        className="-ml-1 flex h-12 items-center rounded-full px-1"
-      >
-        <Logo variant="symbole-couleur" height={40} priority className="sm:hidden" />
-        {/* Sans `priority` : chargé en différé, donc jamais téléchargé sur mobile où il est masqué. */}
-        <Logo variant="horizontal-couleur" height={40} className="hidden sm:block" />
+    <GlassPanel
+      as="header"
+      className={cn('flex items-center justify-between gap-2 py-1 pr-1 pl-4', className)}
+    >
+      <Link href="/" aria-label="Iwadu Pharma, accueil" className="flex h-12 shrink-0 items-center">
+        <Logo variant="horizontal-couleur" height={32} priority />
       </Link>
-      <Link
-        href="/compte"
-        aria-label="Mon compte"
-        className="flex size-12 items-center justify-center rounded-full text-ink hover:bg-surface"
-      >
-        <User aria-hidden className="size-6" />
-      </Link>
-    </header>
+      <div className="flex min-w-0 items-center">
+        {subtitle && (
+          <span className="type-caption line-clamp-2 text-right text-ink-muted">{subtitle}</span>
+        )}
+        <Link
+          href="/compte"
+          aria-label="Mon compte"
+          className="group flex size-12 shrink-0 items-center justify-center rounded-full"
+        >
+          <span className="flex size-8 items-center justify-center rounded-full bg-muted text-ink-muted transition-colors group-hover:bg-hairline">
+            <User aria-hidden className="size-4" />
+          </span>
+        </Link>
+      </div>
+    </GlassPanel>
   );
 }

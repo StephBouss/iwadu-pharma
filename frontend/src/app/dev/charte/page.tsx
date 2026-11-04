@@ -78,9 +78,11 @@ export default function CharteComposantsPage() {
 
   return (
     <>
-      <AppHeader />
+      <div className="mx-auto w-full max-w-5xl px-4 pt-4">
+        <AppHeader subtitle="Près de votre position · Louis" />
+      </div>
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-16">
-        <div className="flex flex-col gap-1 pt-2">
+        <div className="flex flex-col gap-1 pt-6">
           <p className="type-overline text-action">Charte graphique V1.0</p>
           <h1 className="type-display text-ink">Composants</h1>
           <p className="type-body text-ink-muted">

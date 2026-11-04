@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react';
 import { ChevronRight, Store } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/Button';
+import { GlassPanel } from '@/components/ui/GlassPanel';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import { formatClock, formatDistance } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-// Charte V1.0 — carte de pharmacie : nom, distance et ouverture, états de
-// l'ordonnance, heure de mise à jour du stock, action. La pharmacie qui a
-// toute l'ordonnance est mise en avant (fond teinté, contour vert d'action).
+// Maquette Banani « Pharmacy Card » (charte V1.0) : nom, distance et
+// ouverture, badge « De garde » en haut à droite, couverture de l'ordonnance,
+// heure de mise à jour du stock, action. La pharmacie qui a toute
+// l'ordonnance est cerclée de vert d'action.
 
 export interface PharmacyCardProps {
   name: string;
@@ -14,7 +17,9 @@ export interface PharmacyCardProps {
   distanceMeters?: number | undefined;
   /** Ouverture déjà rédigée : « Ouverte jusqu'à 21 h », « De garde cette nuit »… */
   openingLabel?: string | undefined;
-  /** Badges d'état (`StatusBadge`) : couverture de l'ordonnance, garde… */
+  /** Pharmacie de garde : badge « De garde » à côté du nom. */
+  onDuty?: boolean | undefined;
+  /** Badges d'état (`StatusBadge`), en général la couverture de l'ordonnance. */
   badges?: ReactNode;
   /** Heure de mise à jour du stock : un stock affiche toujours son heure. */
   stockUpdatedAt?: Date | undefined;
@@ -29,6 +34,7 @@ export function PharmacyCard({
   name,
   distanceMeters,
   openingLabel,
+  onDuty = false,
   badges,
   stockUpdatedAt,
   highlighted = false,
@@ -43,32 +49,28 @@ export function PharmacyCard({
     .join(' · ');
 
   return (
-    <article
-      className={cn(
-        'flex flex-col gap-4 rounded-card p-5',
-        highlighted
-          ? 'border-2 border-action bg-brand/8'
-          : 'border border-hairline bg-surface shadow-card',
-        className,
-      )}
+    <GlassPanel
+      as="article"
+      className={cn('flex flex-col gap-3 p-4', highlighted && 'ring-2 ring-action', className)}
     >
       <div className="flex items-start gap-3">
         <span
           aria-hidden
-          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-ivory text-action"
+          className="flex size-10 shrink-0 items-center justify-center rounded-field bg-available-soft text-action"
         >
           <Store className="size-5" />
         </span>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 className="type-title-2 text-ink">{name}</h3>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h3 className="type-title-3 wrap-break-word text-ink">{name}</h3>
           {subline && <p className="type-body-small text-ink-muted">{subline}</p>}
         </div>
+        {onDuty && <StatusBadge status="on-duty" className="shrink-0" />}
       </div>
 
-      {badges && <div className="flex flex-wrap gap-2">{badges}</div>}
+      {badges && <div className="flex flex-wrap items-center gap-2">{badges}</div>}
 
       {stockUpdatedAt && (
-        <p className="type-body-small text-ink-muted">
+        <p className="type-caption text-ink-muted">
           Stock mis à jour à {formatClock(stockUpdatedAt)}
         </p>
       )}
@@ -79,10 +81,11 @@ export function PharmacyCard({
           variant="secondary"
           fullWidth
           trailingIcon={<ChevronRight aria-hidden />}
+          className="mt-auto"
         >
           Voir la pharmacie
         </ButtonLink>
       )}
-    </article>
+    </GlassPanel>
   );
 }

@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react';
 import { Amount } from '@/components/ui/Amount';
+import { GlassPanel } from '@/components/ui/GlassPanel';
 import { formatFcfa, NBSP } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -35,12 +36,11 @@ export function PriceSummary({ total, coverage, className }: PriceSummaryProps) 
     : null;
 
   return (
-    <section
+    <GlassPanel
+      as="section"
+      radius="sheet"
       aria-label="Récapitulatif du prix"
-      className={cn(
-        'flex flex-col gap-4 rounded-card border border-hairline bg-surface p-6 shadow-card',
-        className,
-      )}
+      className={cn('flex flex-col gap-4 p-5', className)}
     >
       <div className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-4">
@@ -78,6 +78,6 @@ export function PriceSummary({ total, coverage, className }: PriceSummaryProps) 
             : 'Prix indicatif, à confirmer en pharmacie.'}
         </span>
       </p>
-    </section>
+    </GlassPanel>
   );
 }

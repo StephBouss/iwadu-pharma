@@ -6,11 +6,12 @@ Banani flow: « Interface Verre Menthe » (`0a703blR_eKf`).
 
 ## Done
 
-- [x] `admin-dashboard` — preview at `src/app/dev/admin/page.tsx` (fictitious data) — plan: `admin-dashboard.md`
+- [x] `admin-dashboard` — preview at `src/app/dev/admin/page.tsx` (fictitious data) — plan: `admin-dashboard.md` — commit: f381c60
+- [x] `resultats-ordonnance` — preview at `src/app/dev/resultat/page.tsx` (fictitious data), mobile mockup + desktop redesign — plan: `resultats-ordonnance.md`
 
 ## In progress
 
-- [ ] `resultats-ordonnance` — mobile mockup, redesigned for desktop — plan: `resultats-ordonnance.md`
+- None.
 
 ## Pending (seen in Banani, not yet fetched/planned)
 
@@ -19,3 +20,4 @@ Banani flow: « Interface Verre Menthe » (`0a703blR_eKf`).
 ## Open design questions
 
 - Glassmorphism (`backdrop-filter`) has a cost on entry-level Android phones; to measure on a real low-end device before launch. Fallback without blur already exists.
+- Real URL of the prescription result (own page vs. same page as the search) — to settle with the search journey.
