@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This fork is **Iwadu Pharma** (Gabon): find the pharmacy that has a whole prescription close to the visitor's current position, see the price with or without health insurance, unlock pharmacy names and prices through Mobile Money, then reserve. Web first; the future mobile app will call the same `/api/*`, so this repo is the **single backend**. The kit sections below remain valid; this section adds the product's rules on top.
 
 - **This repository is public.** The product requirements and business documents are confidential and kept outside the repo — never copy their text, plans or figures into it.
-- **Payments: BambooPay** (Airtel Money, Moov Money; XAF, integer francs) behind the `PaymentProvider` interface. Bictorys is slated for removal (it does not cover Gabon).
+- **Payments: BambooPay** (Airtel Money, Moov Money; XAF, integer francs), to be added behind the `PaymentProvider` interface. **Bictorys stays in the code but inactive**, by the owner's decision: its keys are left empty, so payment routes answer 503 `PAYMENT_PROVIDER_UNCONFIGURED`. Do not delete it and do not set its keys. The withdrawals surface is kept too (de facto inert: no confirmed payments means a zero balance).
 - **Local env file is `frontend/.env`**, not `.env.local`: the Prisma CLI only reads `.env`.
 
 ### Product rules (non-negotiable)
