@@ -67,3 +67,23 @@ export function formatClock(date: Date, timeZone: string = DEFAULT_TIME_ZONE): s
   const minute = parts.find((p) => p.type === 'minute')?.value ?? '00';
   return minute === '00' ? `${hour}${NBSP}h` : `${hour}${NBSP}h${NBSP}${minute}`;
 }
+
+/**
+ * Date en toutes lettres : « Mercredi 4 novembre 2026 », « Mardi 1er décembre
+ * 2026 ». Jour calculé à Libreville par défaut, quel que soit le serveur.
+ */
+export function formatLongDate(date: Date, timeZone: string = DEFAULT_TIME_ZONE): string {
+  const parts = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone,
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? '';
+  const weekday = part('weekday');
+  const day = part('day') === '1' ? '1er' : part('day');
+  const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  return `${capitalized} ${day} ${part('month')} ${part('year')}`;
+}

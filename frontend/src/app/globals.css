@@ -43,6 +43,13 @@
 
   /* Colonne centrale de l'application patient sur ordinateur */
   --container-patient: 30rem; /* 480 px */
+
+  /* Maquettes Banani « Verre Menthe » : panneaux en verre dépoli sur fond
+     ivoire décoré du motif de carrés (BgShapes). */
+  --color-mint-soft: #d3eee6; /* Vert très pâle — formes décoratives, fonds doux */
+  --color-muted: #e9eeec; /* Surface neutre — pastilles, avatars, étiquettes */
+  --shadow-glass: 0 8px 32px rgb(2 25 22 / 0.08);
+  --blur-glass: 20px;
 }
 
 /* Polices auto-hébergées par next/font (variables posées sur <html> dans layout.tsx) */

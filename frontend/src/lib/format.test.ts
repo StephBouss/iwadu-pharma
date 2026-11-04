@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { formatClock, formatDistance, formatFcfa, formatGroupedInt } from './format';
+import {
+  formatClock,
+  formatDistance,
+  formatFcfa,
+  formatGroupedInt,
+  formatLongDate,
+} from './format';
 
 // U+00A0 (espace insécable) : jamais de retour à la ligne au milieu d'un
 // montant ni entre le nombre et son unité.
@@ -83,5 +89,20 @@ describe('formatClock', () => {
 
   it('accepte un autre fuseau', () => {
     expect(formatClock(new Date('2026-11-04T13:05:00Z'), 'UTC')).toBe(`13${NBSP}h${NBSP}05`);
+  });
+});
+
+describe('formatLongDate', () => {
+  it('écrit la date en toutes lettres, jour en majuscule', () => {
+    expect(formatLongDate(new Date('2026-11-04T10:00:00Z'))).toBe('Mercredi 4 novembre 2026');
+  });
+
+  it('suit le jour de Libreville, pas celui du serveur', () => {
+    // 23 h 30 UTC = 0 h 30 le lendemain à Libreville (UTC+1).
+    expect(formatLongDate(new Date('2026-11-04T23:30:00Z'))).toBe('Jeudi 5 novembre 2026');
+  });
+
+  it('écrit « 1er » pour le premier jour du mois', () => {
+    expect(formatLongDate(new Date('2026-12-01T10:00:00Z'))).toBe('Mardi 1er décembre 2026');
   });
 });
