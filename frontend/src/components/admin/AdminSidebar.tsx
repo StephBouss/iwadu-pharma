@@ -52,11 +52,17 @@ export function AdminSidebar({ active, adminName, adminRole, className }: AdminS
       </nav>
 
       <div className="flex flex-col gap-1 border-t border-mint/12 px-3 pt-4 pb-4">
-        {ADMIN_NAV_SECONDARY.map(({ label, href, icon: Icon }) => (
+        {ADMIN_NAV_SECONDARY.map(({ id, label, href, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className="type-caption flex items-center gap-3 rounded-card px-3 py-2.5 text-surface/50 transition-colors hover:bg-surface/5 hover:text-surface"
+            aria-current={id === active ? 'page' : undefined}
+            className={cn(
+              'type-caption flex items-center gap-3 rounded-card border-l-3 px-3 py-2.5 transition-colors',
+              id === active
+                ? 'border-mint bg-mint/15 text-mint'
+                : 'border-transparent text-surface/50 hover:bg-surface/5 hover:text-surface',
+            )}
           >
             <Icon aria-hidden className="size-4 shrink-0" />
             {label}

@@ -2,15 +2,16 @@ import type { LucideIcon } from 'lucide-react';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { cn } from '@/lib/utils';
 
-// Maquette Banani « Stat Card » : indicateur clé du back-office. La couleur
-// de la tendance dit si l'évolution est bonne ou mauvaise, pas si le nombre
-// monte : « -3 alertes » est une bonne nouvelle, donc en vert.
+// Maquette « Admin – Tableau de bord » : carte d'indicateur en verre clair,
+// pastille d'icône verte, pastille de tendance en haut à droite, valeur en
+// grand. La couleur de la tendance dit si l'évolution est bonne ou mauvaise,
+// pas si le nombre monte : « −3 alertes » est une bonne nouvelle, donc en vert.
 
 export interface StatTrend {
-  /** Texte affiché, ex. « +12 % » ou « -3 ». */
+  /** Texte affiché, ex. « +12 % » ou « −3 ». */
   label: string;
-  tone: 'positive' | 'negative';
-  /** Base de comparaison lue par les lecteurs d'écran, ex. « par rapport à hier ». */
+  tone: 'positive' | 'negative' | 'neutral';
+  /** Base de comparaison lue par les lecteurs d'écran, ex. « par rapport au mois dernier ». */
   comparison: string;
 }
 
@@ -36,24 +37,24 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <GlassPanel className={cn('flex flex-col gap-3 p-4 lg:p-5', className)}>
-      <div className="flex items-center justify-between gap-2">
+    <GlassPanel className={cn('flex flex-col gap-4 p-5 lg:p-6', className)}>
+      <div className="flex items-start justify-between gap-2">
         <span
           aria-hidden
           className={cn(
-            'flex size-10 shrink-0 items-center justify-center rounded-field',
-            accent ? 'bg-action text-surface' : 'bg-available-soft text-action',
+            'flex size-12 shrink-0 items-center justify-center rounded-field',
+            accent ? 'bg-action text-surface' : 'bg-action/15 text-action',
           )}
         >
-          <Icon className="size-5" />
+          <Icon className="size-6" />
         </span>
         {trend && (
           <span
             className={cn(
-              'rounded-full px-2 py-1 text-[0.8125rem] leading-4 font-semibold tabular-nums',
-              trend.tone === 'positive'
-                ? 'bg-available-soft text-available'
-                : 'bg-error-soft text-error',
+              'type-caption rounded-md px-3 py-1 font-semibold whitespace-nowrap tabular-nums',
+              trend.tone === 'positive' && 'bg-available-soft text-available',
+              trend.tone === 'negative' && 'bg-error-soft text-error',
+              trend.tone === 'neutral' && 'bg-muted text-ink-muted',
             )}
           >
             {trend.label}
@@ -61,11 +62,11 @@ export function StatCard({
           </span>
         )}
       </div>
-      <div>
-        <p className="type-caption text-ink-muted">{label}</p>
-        <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 font-display text-2xl leading-tight font-bold text-ink tabular-nums lg:text-[1.75rem]">
+      <div className="flex flex-col gap-2">
+        <p className="type-body-small text-ink-muted">{label}</p>
+        <p className="flex flex-wrap items-baseline gap-x-1.5 font-display text-[1.75rem] leading-none font-bold text-ink tabular-nums lg:text-[2rem]">
           {value}
-          {unit && <span className="type-body text-ink-muted">{unit}</span>}
+          {unit && <span className="type-body font-normal text-ink-muted">{unit}</span>}
         </p>
       </div>
     </GlassPanel>
