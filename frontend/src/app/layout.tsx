@@ -23,11 +23,11 @@ const figtree = Figtree({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Iwadu Pharma — Trouver. Comparer. Réserver.',
+    default: 'Iwadu Pharma — la pharmacie qui a toute votre ordonnance',
     template: '%s · Iwadu Pharma',
   },
   description:
-    'Avec ou sans assurance. Photographiez votre ordonnance : nous vous disons où aller et combien vous paierez.',
+    'Avec ou sans assurance. Photographiez votre ordonnance : voyez gratuitement combien de pharmacies ont tous vos médicaments près de vous, et combien prévoir.',
   applicationName: 'Iwadu Pharma',
 };
 
@@ -43,7 +43,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${outfit.variable} ${figtree.variable}`}>
+    <html lang="fr" className={`${outfit.variable} ${figtree.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Verre sans flou sur les appareils peu puissants (voir globals.css). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var n=navigator;if((n.deviceMemory&&n.deviceMemory<=2)||(n.hardwareConcurrency&&n.hardwareConcurrency<=4)){document.documentElement.dataset.glass='lite'}}catch(e){}",
+          }}
+        />
+      </head>
       <body className="min-h-dvh">
         <ToastProvider>
           <AuthProvider>{children}</AuthProvider>

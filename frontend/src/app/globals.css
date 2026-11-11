@@ -50,6 +50,18 @@
   --color-muted: #e9eeec; /* Surface neutre — pastilles, avatars, étiquettes */
   --shadow-glass: 0 8px 32px rgb(2 25 22 / 0.08);
   --blur-glass: 20px;
+
+  /* Maquette « Admin – Tableau de bord » : cartes de verre clair des espaces
+     (back-office, Mon espace), plus opaques, ombre plus marquée, 20 px. */
+  --shadow-glass-lg: 0 12px 40px rgb(2 25 22 / 0.1);
+  --radius-panel: 1.25rem; /* 20 px — cartes des espaces */
+
+  /* Séries des graphiques (validées : bande de luminosité, saturation,
+     daltonisme, contraste sur blanc). Jamais pour du texte. */
+  --color-chart-1: #0f927c; /* vert Iwadu */
+  --color-chart-2: #3b6fd0; /* bleu */
+  --color-chart-3: #b0610d; /* ambre */
+  --color-chart-rest: #c9d3ce; /* reste neutre (« aucune ») */
 }
 
 /* Polices auto-hébergées par next/font (variables posées sur <html> dans layout.tsx) */
@@ -162,5 +174,43 @@
   :focus-visible {
     outline: 2px solid var(--color-action);
     outline-offset: 2px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Verre allégé : pas de flou d'arrière-plan sur les appareils peu puissants
+   (repérés au chargement, voir layout.tsx) ni quand le système demande
+   moins de transparence. Le verre reste semi-transparent, sans flou.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-transparency: reduce) {
+  * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+html[data-glass='lite'] * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Espaces (back-office, Mon espace) — maquette « Admin – Tableau de bord » :
+   fond ivoire vers menthe très pâle, panneaux en verre clair (blanc 85 %,
+   ombre marquée, angles de 20 px). Appliqué à tous les GlassPanel posés
+   dans un `.dashboard`, sans retoucher chaque page.
+   -------------------------------------------------------------------------- */
+@layer utilities {
+  .dashboard {
+    background-image: linear-gradient(135deg, var(--color-ivory) 0%, #ebf4f0 100%);
+  }
+  .dashboard .glass-panel {
+    border-radius: var(--radius-panel);
+    background-color: rgb(255 255 255 / 0.95);
+    box-shadow: var(--shadow-glass-lg);
+  }
+  @supports (backdrop-filter: blur(1px)) {
+    .dashboard .glass-panel {
+      background-color: rgb(255 255 255 / 0.85);
+    }
   }
 }
