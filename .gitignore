@@ -8,6 +8,8 @@ coverage/
 .env
 .env.local
 .env.*.local
+# Valeurs métier locales (prix, quotas, délais) : jamais dans le dépôt public.
+settings.local.json
 *.tsbuildinfo
 .prisma/
 next-env.d.ts
@@ -24,3 +26,6 @@ node-compile-cache/
 # Browser-automation screenshots and snapshots (Playwright MCP)
 .playwright-mcp/
 
+
+# Worker pdf.js copié au démarrage (scripts/copy-pdf-worker.mjs)
+frontend/public/pdfjs/

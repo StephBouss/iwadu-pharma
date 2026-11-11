@@ -113,7 +113,7 @@ export function seedOrder(overrides: OrderOverrides = {}): Order {
     id: overrides.id ?? `order_${Math.random().toString(36).slice(2, 10)}`,
     userId: overrides.userId ?? 'user_seed_1',
     amount: overrides.amount ?? 1000,
-    currency: overrides.currency ?? 'XOF',
+    currency: overrides.currency ?? 'XAF',
     status: overrides.status ?? 'PENDING',
     customerEmail: null,
     customerPhone: null,
@@ -337,7 +337,7 @@ interface WithdrawalOverrides {
 
 /**
  * Pure factory — returns a fully shaped Withdrawal row. Defaults match
- * the most common happy-path test scenario: PENDING, 1000 XOF, WAVE
+ * the most common happy-path test scenario: PENDING, 1000 XAF, WAVE
  * destination with a placeholder Senegalese phone number.
  *
  * Tests typically wire this into `prismaMock.withdrawal.findMany` /
@@ -348,7 +348,7 @@ export function seedWithdrawal(overrides: WithdrawalOverrides = {}): Withdrawal 
     id: overrides.id ?? `withdrawal_${Math.random().toString(36).slice(2, 10)}`,
     userId: overrides.userId ?? 'user_seed_1',
     amount: overrides.amount ?? 1000,
-    currency: overrides.currency ?? 'XOF',
+    currency: overrides.currency ?? 'XAF',
     status: overrides.status ?? 'PENDING',
     destination: (overrides.destination ?? {
       method: 'WAVE',

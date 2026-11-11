@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Iwadu Pharma — read this first
 
-This fork is **Iwadu Pharma** (Gabon): find the pharmacy that has a whole prescription close to the visitor's current position, see the price with or without health insurance, unlock pharmacy names and prices through Mobile Money, then reserve. Web first; the future mobile app will call the same `/api/*`, so this repo is the **single backend**. The kit sections below remain valid; this section adds the product's rules on top.
+This fork is **Iwadu Pharma** (launched in Gabon, meant for several African countries): find the pharmacy that has a whole prescription close to the visitor's current position, see the price with or without health insurance, and unlock pharmacy names and prices through Mobile Money. Reservation comes in V2. Web first; the future mobile app will call the same `/api/*`, so this repo is the **single backend**. The kit sections below remain valid; this section adds the product's rules on top.
 
 - **This repository is public.** The product requirements and business documents are confidential and kept outside the repo — never copy their text, plans or figures into it.
 - **Payments: BambooPay** (Airtel Money, Moov Money; XAF, integer francs), to be added behind the `PaymentProvider` interface. **Bictorys stays in the code but inactive**, by the owner's decision: its keys are left empty, so payment routes answer 503 `PAYMENT_PROVIDER_UNCONFIGURED`. Do not delete it and do not set its keys. The withdrawals surface is kept too (de facto inert: no confirmed payments means a zero balance).
@@ -23,6 +23,16 @@ This fork is **Iwadu Pharma** (Gabon): find the pharmacy that has a whole prescr
 - **Mobile-first**: designed at 360 px, usable from 320 px; on desktop the patient app sits in a 480 px centre column (`max-w-patient`).
 - **Honesty**: a stock status never relies on colour alone (colour + icon + word — use `StatusBadge`); every stock shows its update time; « Disponibilité à vérifier » is not « Indisponible »; prices are estimates (« Prise en charge déclarée », « Reste à payer estimé », « Montant estimé »).
 - **Light**: lazy-load heavy surfaces (map, pharmacy space, back-office); home page under 300 KB on first load.
+- **Not tied to one place**: no city or country name in visible copy (« près de chez vous », « votre quartier », « votre pays »). Phone parsing (`lib/phone.ts`) and the default time zone are still Gabon-specific: make them per-country before a second country.
+
+### MVP scope (web V1.1)
+
+- **V2 surfaces are behind flags** in [frontend/src/lib/features.ts](frontend/src/lib/features.ts) (reservations, ads, pharmacy space): keep the code, keep the flags off, never link to them.
+- **Unlocking is per search** (`SearchSession`, reached by an unguessable token link with a limited lifetime). What the visitor may see is decided by the entitlement services in `lib/server/iwadu/` (free preview per device, pass with quota or fair use, first unlock offered with an account, credit from a trip report), with every quota and delay read from settings. A shared link never shows the owner's account or insurance.
+- **Payment simulator** (demo): signs the webhook like the provider and goes through the same protected factory. It runs in production only with `PAYMENT_SIMULATOR=1`; never a shortcut around the webhook.
+- **Prescription reading**: DeepSeek vision behind `DEEPSEEK_API_KEY`, or `PRESCRIPTION_READER=simulated`. Photos are cropped and compressed in the browser, never stored; a visible person's name blocks the read.
+- **Partner share** (software partner) is computed on the amount paid before provider fees and stored on each `Order` at creation; its rate and the partner's name are settings, never written in the code.
+- **Session refresh**: [frontend/src/proxy.ts](frontend/src/proxy.ts) (Next 16 « proxy », must sit in `src/`) bounces any page whose access cookie expired through `/api/auth/refresh-and-return`, using the CSRF cookie as the session signal (the refresh cookie is scoped to `/api/auth`).
 
 ### Design system (charte graphique V1.0)
 

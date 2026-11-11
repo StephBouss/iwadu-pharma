@@ -43,10 +43,23 @@ model User {
   oauthAccounts     OAuthAccount[]
   adminActions      AdminAction[]
 
+  // Iwadu Pharma
+  phone              String?
+  // Assurance déclarée par le patient, reprise à chaque ordonnance.
+  insuranceId        String?
+  insurance          Insurance?          @relation(fields: [insuranceId], references: [id], onDelete: SetNull)
+  coverageRate       Int? // pourcentage entier, 0–100
+  pharmacyMember     PharmacyMember?
+  passes             Pass[]
+  familyMembers      FamilyMember[]
+  reservations       Reservation[]
+  savedPrescriptions SavedPrescription[]
+  credits            Credit[]
+
   // Multi-tenancy is opt-in per project: by default no resource is org-scoped.
   // Apps that need it (marketplace, B2B SaaS, classifieds) wire owner relations
   // on their domain models.
-  ownedOrganizations Organization[]      @relation("OrgOwner")
+  ownedOrganizations Organization[]       @relation("OrgOwner")
   memberships        OrganizationMember[] @relation("OrgMembership")
 
   @@index([email])
@@ -95,14 +108,14 @@ model AdminAction {
 // used as a stable URL segment.
 // ───────────────────────────────────────────────────────────────────────
 model Organization {
-  id        String   @id @default(cuid())
-  slug      String   @unique
+  id        String               @id @default(cuid())
+  slug      String               @unique
   name      String
   ownerId   String
-  owner     User     @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  owner     User                 @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   members   OrganizationMember[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
 
   @@index([ownerId])
 }
@@ -269,25 +282,25 @@ model WebhookLog {
 // Phase 3 — payments (Order + Withdrawal)
 //
 // `amount` is stored in the smallest unit of `currency` (no decimals).
-// For XOF (FCFA, Senegal) that's 1 = 1 FCFA. For USD adapt to cents
+// For XAF (FCFA, Gabon) that's 1 = 1 FCFA. For USD adapt to cents
 // at the call site — the schema is currency-agnostic.
 // ───────────────────────────────────────────────────────────────────────
 model Order {
-  id              String    @id @default(cuid())
-  userId          String? // nullable — guest checkout supported
-  user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  amount          Int // gross amount, smallest unit
-  currency        String    @default("XOF") // ISO 4217
-  status          String    @default("PENDING") // PENDING | PAID | EXPIRED | FAILED | REFUNDED
-  customerEmail   String?
-  customerPhone   String?
-  customerName    String?
-  metadata        Json? // app-specific fields
+  id            String  @id @default(cuid())
+  userId        String? // nullable — guest checkout supported
+  user          User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  amount        Int // gross amount, smallest unit
+  currency      String  @default("XAF") // ISO 4217
+  status        String  @default("PENDING") // PENDING | PAID | EXPIRED | FAILED | REFUNDED
+  customerEmail String?
+  customerPhone String?
+  customerName  String?
+  metadata      Json? // app-specific fields
 
   // Stripe-grade idempotency. Required header on POST /api/orders; replay
   // with same value returns the original Order row instead of double-charging.
   // Nullable so existing rows pre-migration don't break the @unique constraint.
-  idempotencyKey  String?   @unique
+  idempotencyKey String? @unique
 
   // Provider reference
   provider         String // e.g. "bictorys"
@@ -296,6 +309,14 @@ model Order {
   paymentMethod    String? // WAVE | ORANGE_MONEY | FREE_MONEY (set on PAID by webhook)
 
   // Optional commission (for marketplace-style apps)
+  // Iwadu Pharma : ce que paie la commande (UNLOCK | PASS_SOLO | PASS_FAMILY |
+  // PASS_FAMILY_ANNUAL | PHARMACY_SUBSCRIPTION | AD) et frais du prestataire,
+  // enregistrés à la création au taux du paramètre en vigueur.
+  purpose      String?
+  feeAmount    Int?
+  refundedAt   DateTime?
+  refundReason String?
+
   commissionAmount Int?
   netAmount        Int?
 
@@ -308,15 +329,16 @@ model Order {
   @@index([userId, createdAt])
   @@index([status, expiresAt])
   @@index([provider, providerChargeId])
+  @@index([purpose, status, paidAt])
 }
 
 model Withdrawal {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user        User   @relation(fields: [userId], references: [id], onDelete: Restrict)
   amount      Int // requested amount, smallest unit
-  currency    String   @default("XOF")
-  status      String   @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED
+  currency    String @default("XAF")
+  status      String @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED | CANCELLED
   destination Json // { method: "WAVE" | "ORANGE_MONEY" | ..., phone: "+221...", accountName?: "..." }
 
   // Provider reference
@@ -331,4 +353,369 @@ model Withdrawal {
   @@index([userId, requestedAt])
   @@index([status, requestedAt])
   @@index([provider, providerPayoutId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Iwadu Pharma — domaine
+//
+// Aucune valeur métier (prix, quotas, délais, seuils, taux) n'est écrite
+// dans le code : elles vivent dans Setting et se changent dans le
+// back-office (/admin/parametres) sans republier le site.
+// ═══════════════════════════════════════════════════════════════════════
+
+model Setting {
+  key         String   @id
+  value       Json
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+}
+
+model District {
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  name       String
+  city       String
+  lat        Float
+  lng        Float
+  pharmacies Pharmacy[]
+}
+
+model Pharmacy {
+  id                 String    @id @default(cuid())
+  slug               String    @unique
+  // Code de la pharmacie dans le fichier d’export des stocks (import CSV).
+  code               String?   @unique
+  name               String
+  districtId         String?
+  district           District? @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  address            String?
+  phone              String?
+  lat                Float
+  lng                Float
+  // Horaires de la semaine, heure de Libreville :
+  // { "1": [["08:00", "20:00"]], …, "7": [] } (1 = lundi … 7 = dimanche).
+  openingHours       Json
+  showPrices         Boolean   @default(true)
+  status             String    @default("PENDING") // PENDING | ACTIVE | SUSPENDED
+  launchPricing      Boolean   @default(true)
+  plan               String? // MONTHLY | ANNUAL
+  subscriptionEndsAt DateTime?
+  // Identifiant dans le logiciel de gestion de l'officine (connecteur de stock).
+  softwareId         String?
+  lastSyncAt         DateTime?
+  isDemo             Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  insurances   PharmacyInsurance[]
+  stocks       Stock[]
+  dutyShifts   DutyShift[]
+  members      PharmacyMember[]
+  reservations Reservation[]
+
+  @@index([status])
+}
+
+model PharmacyMember {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pharmacyId String
+  pharmacy   Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([pharmacyId])
+}
+
+model DutyShift {
+  id         String   @id @default(cuid())
+  pharmacyId String
+  pharmacy   Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  startsAt   DateTime
+  endsAt     DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([startsAt, endsAt])
+  @@index([pharmacyId, startsAt])
+}
+
+model Insurance {
+  id         String              @id @default(cuid())
+  name       String              @unique
+  active     Boolean             @default(true)
+  createdAt  DateTime            @default(now())
+  pharmacies PharmacyInsurance[]
+  users      User[]
+}
+
+model PharmacyInsurance {
+  pharmacyId  String
+  pharmacy    Pharmacy  @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  insuranceId String
+  insurance   Insurance @relation(fields: [insuranceId], references: [id], onDelete: Cascade)
+
+  @@id([pharmacyId, insuranceId])
+}
+
+model Product {
+  id           String  @id @default(cuid())
+  // Code produit du fichier d’export des stocks (format à confirmer).
+  code         String? @unique
+  name         String
+  dosage       String?
+  form         String?
+  // Nom + dosage en minuscules sans accents : recherche et rapprochement.
+  searchKey    String  @unique
+  reimbursable Boolean @default(true)
+  stocks       Stock[]
+
+  @@index([name])
+}
+
+model Stock {
+  pharmacyId String
+  pharmacy   Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity   Int
+  priceFcfa  Int
+  updatedAt  DateTime
+
+  @@id([pharmacyId, productId])
+  @@index([productId])
+}
+
+// Une recherche d'ordonnance. La position exacte n'est jamais stockée :
+// seulement le quartier et le résultat calculé au moment de la recherche.
+model SearchSession {
+  id            String        @id @default(cuid())
+  // Identifiant impossible à deviner, présent dans le lien du résultat.
+  token         String        @unique
+  userId        String?
+  deviceId      String?
+  // [{ productId, quantity }]
+  items         Json
+  source        String // PHOTO | MANUAL | NAME | RELAUNCH
+  // Prénom libre pour le carnet d’ordonnances du titulaire.
+  label         String?
+  // Aperçu gratuit décompté du quota de l’appareil.
+  freePreview   Boolean       @default(false)
+  unlockedAt    DateTime?
+  hasInsurance  Boolean       @default(false)
+  insuranceId   String?
+  coverageRate  Int?
+  districtId    String?
+  // [{ pharmacyId, distanceMeters, found: [productId] }]
+  results       Json
+  completeCount Int
+  partialCount  Int
+  createdAt     DateTime      @default(now())
+  expiresAt     DateTime
+  unlocks       Unlock[]
+  reservations  Reservation[]
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([deviceId, createdAt])
+}
+
+model Unlock {
+  id               String        @id @default(cuid())
+  searchSessionId  String
+  searchSession    SearchSession @relation(fields: [searchSessionId], references: [id], onDelete: Cascade)
+  userId           String?
+  deviceId         String?
+  kind             String // PAID | PASS | OFFERED | CREDIT (DISCOVERY : ancien)
+  orderId          String?       @unique
+  creditId         String?       @unique
+  // Réservation couverte par le paiement à l'acte jusqu'à cette date.
+  reservationUntil DateTime?
+  createdAt        DateTime      @default(now())
+
+  @@index([deviceId, kind, createdAt])
+  @@index([userId, createdAt])
+  @@index([searchSessionId])
+}
+
+model PrescriptionRead {
+  id             String   @id @default(cuid())
+  userId         String?
+  deviceId       String?
+  durationMs     Int
+  inputTokens    Int?
+  outputTokens   Int?
+  // Coût estimé de l'appel, en millionièmes de dollar.
+  costMicroUsd   Int?
+  linesRead      Int      @default(0)
+  linesCorrected Int?
+  failed         Boolean  @default(false)
+  failureReason  String?
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+}
+
+model SavedPrescription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  // [{ productId, quantity }]
+  items     Json
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Pass {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan         String // SOLO | FAMILY (le Pass annuel est un Pass Famille plus long)
+  startsAt     DateTime
+  endsAt       DateTime
+  // Recherches incluses sur la durée du Pass ; 0 = illimitées (usage raisonnable).
+  aiReadsQuota Int
+  orderId      String?  @unique
+  createdAt    DateTime @default(now())
+
+  @@index([userId, endsAt])
+}
+
+model FamilyMember {
+  id           String        @id @default(cuid())
+  ownerId      String
+  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  relation     String?
+  createdAt    DateTime      @default(now())
+  reservations Reservation[]
+
+  @@index([ownerId])
+}
+
+model Reservation {
+  id              String         @id @default(cuid())
+  // Code court donné au comptoir.
+  code            String         @unique
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pharmacyId      String
+  pharmacy        Pharmacy       @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  searchSessionId String?
+  searchSession   SearchSession? @relation(fields: [searchSessionId], references: [id], onDelete: SetNull)
+  familyMemberId  String?
+  familyMember    FamilyMember?  @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
+  // Photo figée : [{ productId, name, dosage, quantity, unitPriceFcfa | null }]
+  items           Json
+  totalFcfa       Int?
+  status          String         @default("SENT") // SENT | ACCEPTED | READY | PICKED_UP | REFUSED | EXPIRED
+  refusalReason   String?
+  missingReported Boolean        @default(false)
+  expiresAt       DateTime
+  respondedAt     DateTime?
+  readyAt         DateTime?
+  pickedUpAt      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([pharmacyId, status, createdAt])
+  @@index([userId, createdAt])
+  @@index([status, expiresAt])
+}
+
+model PharmacyApplication {
+  id           String   @id @default(cuid())
+  pharmacyName String
+  districtName String
+  contactName  String
+  phone        String
+  email        String?
+  softwareId   String?
+  message      String?
+  status       String   @default("NEW") // NEW | CONTACTED | ACCEPTED | REJECTED
+  createdAt    DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
+model AdCampaign {
+  id          String    @id @default(cuid())
+  advertiser  String
+  title       String
+  imageUrl    String?
+  linkUrl     String
+  // Quartiers ciblés (identifiants) ; vide = tous.
+  districtIds Json?
+  slot        Int // 1 ou 2
+  startsAt    DateTime
+  endsAt      DateTime
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  events      AdEvent[]
+
+  @@index([slot, active, startsAt, endsAt])
+}
+
+model AdEvent {
+  id         String     @id @default(cuid())
+  campaignId String
+  campaign   AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  kind       String // VIEW | CLICK
+  createdAt  DateTime   @default(now())
+
+  @@index([campaignId, kind, createdAt])
+}
+
+// Crédit d’une recherche, accordé au titre de la garantie « Trajet utile »
+// (signalement sous le délai du paramètre) ou à la main par l’administrateur.
+model Credit {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason          String // TRIP_USEFUL | MANUAL
+  searchSessionId String?
+  pharmacyId      String?
+  note            String?
+  grantedById     String?
+  usedAt          DateTime?
+  usedOnSessionId String?
+  createdAt       DateTime  @default(now())
+
+  @@unique([userId, searchSessionId, reason])
+  @@index([userId, usedAt])
+}
+
+// Événements de mesure de l'entonnoir (landing_view, photo_sent, …).
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  name       String
+  deviceId   String?
+  userId     String?
+  districtId String?
+  props      Json?
+  createdAt  DateTime @default(now())
+
+  @@index([name, createdAt])
+  @@index([districtId, name])
+}
+
+// Prévisions mensuelles du plan, saisies par l'administrateur (« AAAA-MM »).
+model Forecast {
+  month        String   @id
+  revenueFcfa  Int
+  expensesFcfa Int?
+  updatedAt    DateTime @updatedAt
+}
+
+// Charges du mois, saisies par l'administrateur.
+model Expense {
+  id         String   @id @default(cuid())
+  month      String
+  label      String
+  amountFcfa Int
+  createdAt  DateTime @default(now())
+
+  @@index([month])
 }

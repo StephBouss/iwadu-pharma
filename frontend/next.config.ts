@@ -5,11 +5,36 @@ import { withSentryConfig } from '@sentry/nextjs';
 // Set via next.config.ts (not middleware.ts) so Vercel's edge can serve them
 // from the CDN cache without invoking a function — zero per-request latency.
 //
-// CSP is intentionally NOT included here. App Router pages need a per-request
-// nonce (server-rendered) for inline scripts; ship CSP via middleware.ts when
-// the first frontend page lands. For now, the API-only surface doesn't render
-// HTML and doesn't need CSP.
+// CSP statique (sans nonce, pour garder les pages publiques pré-rendues et
+// servies depuis le CDN) : scripts et styles du site lui-même seulement ;
+// `unsafe-inline` reste nécessaire aux scripts d'amorçage de Next.js.
+// Aucune ressource tierce hormis les tuiles de la carte et Sentry.
+const tilesOrigin = (() => {
+  try {
+    const raw = process.env.NEXT_PUBLIC_MAP_TILES_URL || 'https://tile.openstreetmap.org';
+    return new URL(raw.replace(/\{[a-z]\}/g, 'a')).origin;
+  } catch {
+    return 'https://tile.openstreetmap.org';
+  }
+})();
+const isDev = process.env.NODE_ENV !== 'production';
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${tilesOrigin} https://*.tile.openstreetmap.org https://res.cloudinary.com https://lh3.googleusercontent.com`,
+  "font-src 'self' data:",
+  `connect-src 'self' https://*.ingest.sentry.io https://*.ingest.de.sentry.io${isDev ? ' ws: wss:' : ''}`,
+  "worker-src 'self' blob:",
+  "media-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
 const securityHeaders = [
+  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
   {
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',
@@ -19,7 +44,8 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    // Caméra (photo de l'ordonnance) et position : le site lui-même seulement.
+    value: 'camera=(self), microphone=(), geolocation=(self), interest-cohort=()',
   },
   { key: 'X-DNS-Prefetch-Control', value: 'off' },
 ];
@@ -53,6 +79,6 @@ export default withSentryConfig(config, {
   // that filter direct Sentry calls. Off by default — turn on if your
   // user base has heavy ad-blocker usage.
   // tunnelRoute: '/monitoring',
-  hideSourceMaps: true,
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
   disableLogger: true,
 });
