@@ -76,7 +76,7 @@ function wrow(overrides: Partial<WRow> = {}): WRow {
     id,
     userId: overrides.userId ?? 'user_1',
     amount: overrides.amount ?? 5000,
-    currency: overrides.currency ?? 'XOF',
+    currency: overrides.currency ?? 'XAF',
     status: overrides.status ?? 'PENDING',
     destination: overrides.destination ?? { method: 'WAVE', phone: '+221770000000' },
     provider: overrides.provider ?? 'bictorys',
@@ -261,7 +261,7 @@ describe('/api/admin/withdrawals/[id]/cancel [Wave 2] — manual cancel', () => 
       userId: 'user_42',
       status: 'PENDING',
       amount: 8000,
-      currency: 'XOF',
+      currency: 'XAF',
     });
     // Phase-1 owner lookup — outside the lock
     prismaMock.withdrawal.findUnique
@@ -301,7 +301,7 @@ describe('/api/admin/withdrawals/[id]/cancel [Wave 2] — manual cancel', () => 
         metadata: expect.objectContaining({
           withdrawalId: w.id,
           amount: 8000,
-          currency: 'XOF',
+          currency: 'XAF',
           reason: 'fraud',
           previousStatus: 'PENDING',
         }),

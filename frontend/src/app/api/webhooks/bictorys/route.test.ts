@@ -93,7 +93,7 @@ describe('POST /api/webhooks/bictorys', () => {
       userId: 'u1',
       customerEmail: 'a@b.com',
       amount: 1000,
-      currency: 'XOF',
+      currency: 'XAF',
     });
     outboxCreate.mockResolvedValue({ id: 'ob1' });
     const { POST } = await import('./route');

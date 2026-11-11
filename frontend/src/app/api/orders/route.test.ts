@@ -91,7 +91,7 @@ function seededOrder(over: Partial<Record<string, unknown>> = {}) {
     id: 'order_seed_1',
     userId: 'user-1',
     amount: 1000,
-    currency: 'XOF',
+    currency: 'XAF',
     status: 'PENDING',
     customerEmail: 'me@example.com',
     customerPhone: null,
@@ -145,7 +145,7 @@ describe('POST /api/orders [Wave 1] — happy path', () => {
     );
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'idem-key-1' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'idem-key-1' }),
     );
 
     expect(res.status).toBe(201);
@@ -166,7 +166,7 @@ describe('POST /api/orders [Wave 1] — happy path', () => {
 
     await POST(
       makePost(
-        { amount: 5000, currency: 'XOF', metadata: { source: 'web' } },
+        { amount: 5000, currency: 'XAF', metadata: { source: 'web' } },
         { idempotencyKey: 'unique-idem-1' },
       ),
     );
@@ -176,7 +176,7 @@ describe('POST /api/orders [Wave 1] — happy path', () => {
     expect(createArgs?.data).toMatchObject({
       userId: 'user-1',
       amount: 5000,
-      currency: 'XOF',
+      currency: 'XAF',
       provider: 'bictorys',
       status: 'PENDING',
       idempotencyKey: 'unique-idem-1',
@@ -205,7 +205,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
     );
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'replay-key' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'replay-key' }),
     );
 
     expect(res.status).toBe(200);
@@ -234,7 +234,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
     );
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'inflight-key' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'inflight-key' }),
     );
 
     expect(res.status).toBe(503);
@@ -255,7 +255,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
     );
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'failed-replay-key' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'failed-replay-key' }),
     );
 
     expect(res.status).toBe(503);
@@ -265,7 +265,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
   });
 
   it('POST 400 IDEMPOTENCY_KEY_REQUIRED when header missing', async () => {
-    const res = await POST(makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: null }));
+    const res = await POST(makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: null }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toBe('IDEMPOTENCY_KEY_REQUIRED');
@@ -282,14 +282,14 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
       seededOrder({
         id: 'order_existing',
         amount: 1000,
-        currency: 'XOF',
+        currency: 'XAF',
         idempotencyKey: 'replay-mismatch-key',
         metadata: null,
       }) as never,
     );
 
     const res = await POST(
-      makePost({ amount: 9999, currency: 'XOF' }, { idempotencyKey: 'replay-mismatch-key' }),
+      makePost({ amount: 9999, currency: 'XAF' }, { idempotencyKey: 'replay-mismatch-key' }),
     );
 
     expect(res.status).toBe(422);
@@ -305,7 +305,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
       seededOrder({
         id: 'order_existing_currency',
         amount: 1000,
-        currency: 'XOF',
+        currency: 'XAF',
         idempotencyKey: 'replay-currency-mismatch',
         metadata: null,
       }) as never,
@@ -321,13 +321,13 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
   });
 
   it('POST replay using stored fingerprint hash matches → 200', async () => {
-    // Re-create a row that has a stored fingerprint matching {amount:1000,currency:XOF}.
-    const hash = fingerprintBody({ amount: 1000, currency: 'XOF' });
+    // Re-create a row that has a stored fingerprint matching {amount:1000,currency:XAF}.
+    const hash = fingerprintBody({ amount: 1000, currency: 'XAF' });
     prismaMock.order.findUnique.mockResolvedValue(
       seededOrder({
         id: 'order_existing_hash_match',
         amount: 1000,
-        currency: 'XOF',
+        currency: 'XAF',
         idempotencyKey: 'replay-hash-match',
         paymentUrl: 'https://checkout.test/bictorys/pay/existing',
         metadata: { idempotencyBodyHash: hash } as never,
@@ -335,7 +335,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
     );
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'replay-hash-match' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'replay-hash-match' }),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -348,7 +348,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
       seededOrder({
         id: 'order_existing_hash_mismatch',
         amount: 1000,
-        currency: 'XOF',
+        currency: 'XAF',
         idempotencyKey: 'replay-hash-mismatch',
         // Hash that does not correspond to the current body — even though
         // amount/currency happen to match in the row, the stored hash takes
@@ -360,7 +360,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
     );
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'replay-hash-mismatch' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'replay-hash-mismatch' }),
     );
     expect(res.status).toBe(422);
     const body = await res.json();
@@ -369,7 +369,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
 
   it('POST 400 IDEMPOTENCY_KEY_INVALID when key exceeds 200 chars', async () => {
     const huge = 'x'.repeat(201);
-    const res = await POST(makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: huge }));
+    const res = await POST(makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: huge }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toBe('IDEMPOTENCY_KEY_INVALID');
@@ -384,7 +384,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
 
     await POST(
       makePost(
-        { amount: 2500, currency: 'XOF', metadata: { source: 'web' } },
+        { amount: 2500, currency: 'XAF', metadata: { source: 'web' } },
         { idempotencyKey: 'fingerprint-store-key' },
       ),
     );
@@ -395,7 +395,7 @@ describe('POST /api/orders [Wave 1] — idempotency', () => {
       idempotencyBodyHash: expect.any(String),
     });
     // Hash is stable for the same canonical body.
-    const expectedHash = fingerprintBody({ amount: 2500, currency: 'XOF' });
+    const expectedHash = fingerprintBody({ amount: 2500, currency: 'XAF' });
     expect((createArgs?.data.metadata as { idempotencyBodyHash: string }).idempotencyBodyHash).toBe(
       expectedHash,
     );
@@ -416,7 +416,7 @@ describe('POST /api/orders [Wave 1] — circuit breaker', () => {
     });
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'circuit-key' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'circuit-key' }),
     );
 
     expect(res.status).toBe(503);
@@ -441,7 +441,7 @@ describe('POST /api/orders [Wave 1] — config guards', () => {
     });
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'no-env-key' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'no-env-key' }),
     );
 
     expect(res.status).toBe(503);
@@ -463,7 +463,7 @@ describe('POST /api/orders [Wave 1] — config guards', () => {
 
     try {
       const res = await POST(
-        makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'no-public-url-key' }),
+        makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'no-public-url-key' }),
       );
 
       expect(res.status).toBe(503);
@@ -490,7 +490,7 @@ describe('POST /api/orders [Wave 1] — config guards', () => {
     // NODE_ENV stays 'test' (vitest default); the route's localhost fallback applies.
 
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'dev-fallback-key' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'dev-fallback-key' }),
     );
 
     expect(res.status).toBe(201);
@@ -501,7 +501,7 @@ describe('POST /api/orders [Wave 1] — validation', () => {
   it('POST 400 VALIDATION_FAILED on non-integer amount', async () => {
     prismaMock.order.findUnique.mockResolvedValue(null as never);
     const res = await POST(
-      makePost({ amount: 99.5, currency: 'XOF' }, { idempotencyKey: 'val-1' }),
+      makePost({ amount: 99.5, currency: 'XAF' }, { idempotencyKey: 'val-1' }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -512,7 +512,7 @@ describe('POST /api/orders [Wave 1] — validation', () => {
   it('POST 400 VALIDATION_FAILED on negative amount', async () => {
     prismaMock.order.findUnique.mockResolvedValue(null as never);
     const res = await POST(
-      makePost({ amount: -100, currency: 'XOF' }, { idempotencyKey: 'val-2' }),
+      makePost({ amount: -100, currency: 'XAF' }, { idempotencyKey: 'val-2' }),
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -524,7 +524,7 @@ describe('POST /api/orders [Wave 1] — validation', () => {
       NextResponse.json({ error: 'Missing token' }, { status: 401 }),
     );
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'auth-1' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'auth-1' }),
     );
     expect(res.status).toBe(401);
     expect(prismaMock.order.create).not.toHaveBeenCalled();
@@ -534,7 +534,7 @@ describe('POST /api/orders [Wave 1] — validation', () => {
 describe('POST /api/orders [Wave 1] — CSRF', () => {
   it('POST 403 when CSRF header missing (CF-02 — verifyCsrf before auth)', async () => {
     const res = await POST(
-      makePost({ amount: 1000, currency: 'XOF' }, { idempotencyKey: 'csrf-1', csrf: 'missing' }),
+      makePost({ amount: 1000, currency: 'XAF' }, { idempotencyKey: 'csrf-1', csrf: 'missing' }),
     );
     expect(res.status).toBe(403);
     expect(mockRequireAuth).not.toHaveBeenCalled();

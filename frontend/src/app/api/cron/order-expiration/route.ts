@@ -6,6 +6,7 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyCronSecret } from '@/lib/server/cron/auth';
 import { withLease } from '@/lib/server/leader-lease';
+import { expireDueReservations } from '@/lib/server/iwadu/reservations';
 import { expirePendingOrders } from '@/lib/server/orders/expire';
 import { prisma } from '@/lib/server/prisma';
 import { redis } from '@/lib/server/redis';
@@ -29,7 +30,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // tweak that value in their order-creation route (Phase 3) per RESEARCH A3.
       // This cron does NOT compute the cutoff itself.
       const { expired } = await expirePendingOrders({ prisma });
-      processed = expired;
+      // Iwadu : réservations restées sans suite après leur échéance.
+      const reservations = await expireDueReservations(prisma);
+      processed = expired + reservations;
       log.info('order-expiration tick', { processed, requestId: ctx.requestId });
     });
 

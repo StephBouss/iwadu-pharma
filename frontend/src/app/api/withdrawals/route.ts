@@ -71,7 +71,7 @@ import { makeRequestContext, withRequestContext } from '@/lib/server/observabili
 // preserved by intermediaries and may end up in proxy logs.
 const Body = z.object({
   amount: z.number().int().positive(),
-  currency: z.literal('XOF').default('XOF'),
+  currency: z.literal('XAF').default('XAF'),
   destination: z.object({
     method: z.enum(['WAVE', 'ORANGE_MONEY', 'MTN_MOMO']),
     phone: z.string().regex(/^\+\d{10,15}$/, 'phone must be E.164 (e.g. +221XXXXXXXX)'),

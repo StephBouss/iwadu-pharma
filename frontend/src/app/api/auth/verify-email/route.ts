@@ -19,6 +19,7 @@ import { redis } from '@/lib/server/redis';
 import { createEmailLimiter } from '@/lib/server/middleware/rate-limit-by-email';
 import { makeRequestContext, withRequestContext } from '@/lib/server/observability/request-context';
 import { log } from '@/lib/server/observability/log';
+import { track } from '@/lib/server/iwadu/analytics';
 import {
   VERIFICATION_CODE_REGEX,
   setAuthCookies,
@@ -169,6 +170,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     await setCsrfCookie();
 
     log.info('verify-email success', { userId: user.id });
+    await track('account_created', { userId: user.id });
     const res = NextResponse.json({
       ok: true,
       user: { sub: user.id, email: user.email },

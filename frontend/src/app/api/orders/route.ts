@@ -67,12 +67,12 @@ function fingerprintBody(input: { amount: number; currency: string }): string {
 }
 
 // D-PAY-04 — body schema. amount must be a positive integer in the smallest
-// currency unit (CF-10). currency defaults to XOF (FCFA, Senegal). All
+// currency unit (CF-10). currency defaults to XAF (FCFA CEMAC, Gabon). All
 // customer/metadata fields optional; customerEmail defaults to the auth
 // session's email if absent.
 const Body = z.object({
   amount: z.number().int().positive(),
-  currency: z.string().length(3).default('XOF'),
+  currency: z.string().length(3).default('XAF'),
   customerEmail: z.string().email().optional(),
   customerPhone: z.string().optional(),
   customerName: z.string().optional(),

@@ -13,6 +13,7 @@ vi.mock('@/lib/server/orders/expire', () => ({
 }));
 
 vi.mock('@/lib/server/prisma', () => ({ prisma: {} }));
+vi.mock('@/lib/server/iwadu/reservations', () => ({ expireDueReservations: vi.fn(async () => 0) }));
 
 beforeEach(() => {
   vi.stubEnv('CRON_SECRET', 'test-secret');

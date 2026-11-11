@@ -76,7 +76,7 @@ const txWithdrawal = {
     userId: 'user-1',
     status: 'PENDING',
     amount: 1000,
-    currency: 'XOF',
+    currency: 'XAF',
     requestedAt: new Date('2026-05-08T12:00:00Z'),
   })),
   findMany: vi.fn(),
@@ -144,7 +144,7 @@ function makeGetReq(query: string = '') {
 
 const validBody: PostBody = {
   amount: 1000,
-  currency: 'XOF',
+  currency: 'XAF',
   destination: { method: 'WAVE', phone: '+221770000001' },
   pin: '1234',
 };
@@ -206,7 +206,7 @@ describe('POST /api/withdrawals (RED — Wave 1 will turn these green)', () => {
     const { POST } = await import('./route');
     const res = await POST(
       makePostReq({
-        currency: 'XOF',
+        currency: 'XAF',
         destination: { method: 'WAVE', phone: '+221770000001' },
         pin: '1234',
       } as Partial<PostBody>) as never,
@@ -221,7 +221,7 @@ describe('POST /api/withdrawals (RED — Wave 1 will turn these green)', () => {
     const res = await POST(
       makePostReq({
         amount: 1000,
-        currency: 'XOF',
+        currency: 'XAF',
         destination: { method: 'WAVE', phone: '+0' },
         pin: '1234',
       }) as never,
@@ -236,7 +236,7 @@ describe('POST /api/withdrawals (RED — Wave 1 will turn these green)', () => {
     const res = await POST(
       makePostReq({
         amount: 1000,
-        currency: 'XOF',
+        currency: 'XAF',
         destination: { method: 'NOT_A_METHOD', phone: '+221770000001' },
         pin: '1234',
       }) as never,
@@ -308,7 +308,7 @@ describe('GET /api/withdrawals (RED — Wave 1 will turn these green)', () => {
         id: 'w-2',
         userId: 'user-1',
         amount: 2000,
-        currency: 'XOF',
+        currency: 'XAF',
         status: 'PENDING',
         destination: { method: 'WAVE', phone: '+221770000001' },
         provider: 'bictorys',
@@ -322,7 +322,7 @@ describe('GET /api/withdrawals (RED — Wave 1 will turn these green)', () => {
         id: 'w-1',
         userId: 'user-1',
         amount: 1000,
-        currency: 'XOF',
+        currency: 'XAF',
         status: 'COMPLETED',
         destination: { method: 'WAVE', phone: '+221770000001' },
         provider: 'bictorys',
