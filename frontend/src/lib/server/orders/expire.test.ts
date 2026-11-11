@@ -26,8 +26,8 @@ describe('expirePendingOrders (CRON-04)', () => {
 
   it('marks all candidates EXPIRED and returns the count', async () => {
     findMany.mockResolvedValueOnce([
-      { id: 'o1', userId: 'u1', amount: 1000, currency: 'XOF' },
-      { id: 'o2', userId: null, amount: 2000, currency: 'XOF' },
+      { id: 'o1', userId: 'u1', amount: 1000, currency: 'XAF' },
+      { id: 'o2', userId: null, amount: 2000, currency: 'XAF' },
     ]);
     updateMany.mockResolvedValue({ count: 1 });
     const r = await expirePendingOrders({ prisma });
@@ -57,8 +57,8 @@ describe('expirePendingOrders (CRON-04)', () => {
 
   it('skips rows the WHERE-guard rejects (raced to PAID by webhook)', async () => {
     findMany.mockResolvedValueOnce([
-      { id: 'o1', userId: 'u1', amount: 1000, currency: 'XOF' },
-      { id: 'o2', userId: 'u2', amount: 1000, currency: 'XOF' },
+      { id: 'o1', userId: 'u1', amount: 1000, currency: 'XAF' },
+      { id: 'o2', userId: 'u2', amount: 1000, currency: 'XAF' },
     ]);
     // o1 wins, o2 lost the race (count=0 → another worker flipped to PAID)
     updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });

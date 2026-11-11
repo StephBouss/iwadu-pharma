@@ -64,8 +64,32 @@ export function formatClock(date: Date, timeZone: string = DEFAULT_TIME_ZONE): s
     timeZone,
   }).formatToParts(date);
   const hour = Number(parts.find((p) => p.type === 'hour')?.value);
-  const minute = parts.find((p) => p.type === 'minute')?.value ?? '00';
-  return minute === '00' ? `${hour}${NBSP}h` : `${hour}${NBSP}h${NBSP}${minute}`;
+  const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? '0');
+  return formatHourMinute(hour, minute);
+}
+
+/** « Mercredi 4 novembre » : la date longue sans l'année. */
+export function formatDayMonth(date: Date, timeZone: string = DEFAULT_TIME_ZONE): string {
+  return formatLongDate(date, timeZone).replace(/ \d{4}$/, '');
+}
+
+/** « 4 nov. 2026 à 14 h 05 » : date courte et heure, pour les listes. */
+export function formatDateTime(date: Date, timeZone: string = DEFAULT_TIME_ZONE): string {
+  const day = new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone,
+  })
+    .format(date)
+    .replace(/\s/g, NBSP);
+  return `${day} à ${formatClock(date, timeZone)}`;
+}
+
+/** « 21 h », « 8 h 30 » à partir d'heures et de minutes déjà connues. */
+export function formatHourMinute(hour: number, minute: number): string {
+  const mm = String(minute).padStart(2, '0');
+  return minute === 0 ? `${hour}${NBSP}h` : `${hour}${NBSP}h${NBSP}${mm}`;
 }
 
 /**

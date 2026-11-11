@@ -5,7 +5,7 @@
  * The orders/withdrawals routes consume the interface — never the concrete
  * adapter — so swapping providers is one wiring change in `index.ts`.
  *
- * Amounts are integer "smallest unit" of `currency`. For XOF (FCFA) that's
+ * Amounts are integer "smallest unit" of `currency`. For XAF (FCFA) that's
  * 1 = 1 FCFA (no decimals). For USD/EUR adapt to cents at the call site.
  */
 
@@ -24,7 +24,7 @@ export interface ChargeCustomer {
 export interface ChargeInput {
   /** Smallest currency unit (FCFA: 1 = 1 FCFA, USD: 1 = 1 cent). */
   amount: number;
-  /** ISO 4217 currency code (e.g. "XOF", "USD"). */
+  /** ISO 4217 currency code (e.g. "XAF", "USD"). */
   currency: string;
   customer: ChargeCustomer;
   /** App-specific bag stored as Order.metadata. */

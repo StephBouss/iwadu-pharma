@@ -24,7 +24,7 @@ function makeRow(overrides: Partial<Record<string, unknown>> = {}): Record<strin
   return {
     id: 'oe_1',
     kind: 'notification.payment_received',
-    payload: { userId: 'u_1', orderId: 'o_1', amount: 1000, currency: 'XOF' },
+    payload: { userId: 'u_1', orderId: 'o_1', amount: 1000, currency: 'XAF' },
     status: 'PROCESSING',
     attempts: 1,
     scheduledAt: new Date('2026-01-01T00:00:00Z'),
