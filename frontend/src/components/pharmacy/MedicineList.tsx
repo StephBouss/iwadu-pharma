@@ -21,24 +21,28 @@ export interface MedicineListProps {
 
 export function MedicineList({ medicines, className }: MedicineListProps) {
   return (
-    <ul className={cn('flex flex-col divide-y divide-hairline', className)}>
+    // Le badge passe sous le nom quand la liste est étroite (mobile, colonne
+    // de détail sur ordinateur) : requête de conteneur, pas d'écran.
+    <ul className={cn('@container flex flex-col divide-y divide-hairline', className)}>
       {medicines.map((medicine) => (
-        <li key={medicine.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+        <li key={medicine.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
           <span
             aria-hidden
             className="flex size-9 shrink-0 items-center justify-center rounded-field bg-mint-soft text-action"
           >
             <Pill className="size-4" />
           </span>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <p className="type-body-strong text-ink">
-              {medicine.name} {medicine.dosage}
-            </p>
-            <p className="type-caption text-ink-muted">
-              {medicine.quantity} {medicine.quantity > 1 ? 'boîtes' : 'boîte'}
-            </p>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 @md:flex-row @md:items-center @md:justify-between @md:gap-3">
+            <div className="flex min-w-0 flex-col">
+              <p className="type-body-strong text-ink">
+                {medicine.name} {medicine.dosage}
+              </p>
+              <p className="type-caption text-ink-muted">
+                {medicine.quantity} {medicine.quantity > 1 ? 'boîtes' : 'boîte'}
+              </p>
+            </div>
+            <StatusBadge status={medicine.status} className="shrink-0 self-start @md:self-auto" />
           </div>
-          <StatusBadge status={medicine.status} className="shrink-0" />
         </li>
       ))}
     </ul>

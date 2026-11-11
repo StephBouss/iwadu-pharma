@@ -8,12 +8,15 @@ import { cn } from '@/lib/utils';
 // par écran, en vert d'action.
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
-export type ButtonSize = 'md' | 'sm';
+export type ButtonSize = 'lg' | 'md' | 'sm';
+/** « dark » : bouton posé sur le bandeau dégradé ou un fond encre. */
+export type ButtonTone = 'light' | 'dark';
 
 export interface ButtonStyleOptions {
   variant?: ButtonVariant | undefined;
   size?: ButtonSize | undefined;
   fullWidth?: boolean | undefined;
+  tone?: ButtonTone | undefined;
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
@@ -24,7 +27,17 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   ghost: 'text-action hover:bg-action/5 disabled:text-ink-muted',
 };
 
+// Sur fond sombre : le bouton principal passe en menthe (texte encre,
+// contraste AAA), les autres en verre clair.
+const DARK_VARIANT_CLASSES: Record<ButtonVariant, string> = {
+  primary: 'bg-mint text-ink hover:bg-mint-soft disabled:opacity-50',
+  secondary:
+    'border border-surface/40 bg-surface/14 text-surface hover:bg-surface/22 disabled:opacity-50',
+  ghost: 'text-mint hover:bg-surface/10 disabled:opacity-50',
+};
+
 const SIZE_CLASSES: Record<ButtonSize, string> = {
+  lg: 'min-h-14 px-7 py-2 text-lg leading-6', // 56 px : action principale des bandeaux
   md: 'h-12 px-6', // 48 px : cible tactile minimale de la charte
   sm: 'h-10 px-4', // actions secondaires en ligne (« Modifier »)
 };
@@ -33,10 +46,12 @@ export function buttonStyles({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
+  tone = 'light',
 }: ButtonStyleOptions = {}): string {
   return cn(
-    'type-label inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full transition-colors select-none disabled:cursor-not-allowed [&_svg]:size-5 [&_svg]:shrink-0',
-    VARIANT_CLASSES[variant],
+    'type-label inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-center transition-colors select-none disabled:cursor-not-allowed [&_svg]:size-5 [&_svg]:shrink-0',
+    size === 'lg' ? 'whitespace-normal' : 'whitespace-nowrap',
+    (tone === 'dark' ? DARK_VARIANT_CLASSES : VARIANT_CLASSES)[variant],
     variant === 'ghost' ? 'h-12 px-3' : SIZE_CLASSES[size],
     fullWidth && 'w-full',
   );
@@ -71,6 +86,7 @@ export function Button({
   variant,
   size,
   fullWidth,
+  tone,
   loading = false,
   leadingIcon,
   trailingIcon,
@@ -85,7 +101,7 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cn(buttonStyles({ variant, size, fullWidth }), className)}
+      className={cn(buttonStyles({ variant, size, fullWidth, tone }), className)}
       {...props}
     >
       <ButtonContent leadingIcon={leadingIcon} trailingIcon={trailingIcon} loading={loading}>
@@ -106,6 +122,7 @@ export function ButtonLink({
   variant,
   size,
   fullWidth,
+  tone,
   leadingIcon,
   trailingIcon,
   className,
@@ -113,7 +130,7 @@ export function ButtonLink({
   ...props
 }: ButtonLinkProps) {
   return (
-    <Link className={cn(buttonStyles({ variant, size, fullWidth }), className)} {...props}>
+    <Link className={cn(buttonStyles({ variant, size, fullWidth, tone }), className)} {...props}>
       <ButtonContent leadingIcon={leadingIcon} trailingIcon={trailingIcon}>
         {children}
       </ButtonContent>

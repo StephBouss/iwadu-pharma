@@ -24,7 +24,8 @@ export function GlassPanel({
   return (
     <Tag
       className={cn(
-        'border border-surface/60 bg-surface/92 shadow-glass supports-backdrop-filter:bg-surface/72 supports-backdrop-filter:backdrop-blur-glass',
+        // `glass-panel` : repère du style « verre clair » des espaces (globals.css).
+        'glass-panel border border-surface/60 bg-surface/92 shadow-glass supports-backdrop-filter:bg-surface/72 supports-backdrop-filter:backdrop-blur-glass',
         radius === 'sheet' ? 'rounded-sheet' : 'rounded-card',
         className,
       )}

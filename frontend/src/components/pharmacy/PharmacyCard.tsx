@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { ChevronRight, Store } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/Button';
 import { GlassPanel } from '@/components/ui/GlassPanel';
@@ -27,6 +28,12 @@ export interface PharmacyCardProps {
   highlighted?: boolean | undefined;
   /** Lien vers la fiche ; affiche le bouton « Voir la pharmacie ». */
   href?: string | undefined;
+  /** Le nom devient un lien vers la fiche (quand `actions` remplace le bouton). */
+  titleHref?: string | undefined;
+  /** Actions propres à la page (ex. « Itinéraire », « Appeler »). */
+  actions?: ReactNode;
+  /** Contenu supplémentaire sous les badges (détail des médicaments…). */
+  children?: ReactNode;
   className?: string | undefined;
 }
 
@@ -39,6 +46,9 @@ export function PharmacyCard({
   stockUpdatedAt,
   highlighted = false,
   href,
+  titleHref,
+  actions,
+  children,
   className,
 }: PharmacyCardProps) {
   const subline = [
@@ -61,13 +71,23 @@ export function PharmacyCard({
           <Store className="size-5" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
-          <h3 className="type-title-3 wrap-break-word text-ink">{name}</h3>
+          <h3 className="type-title-3 wrap-break-word text-ink">
+            {titleHref ? (
+              <Link href={titleHref} className="hover:text-action hover:underline">
+                {name}
+              </Link>
+            ) : (
+              name
+            )}
+          </h3>
           {subline && <p className="type-body-small text-ink-muted">{subline}</p>}
         </div>
         {onDuty && <StatusBadge status="on-duty" className="shrink-0" />}
       </div>
 
       {badges && <div className="flex flex-wrap items-center gap-2">{badges}</div>}
+
+      {children}
 
       {stockUpdatedAt && (
         <p className="type-caption text-ink-muted">
@@ -86,6 +106,8 @@ export function PharmacyCard({
           Voir la pharmacie
         </ButtonLink>
       )}
+
+      {actions && <div className="mt-auto grid grid-cols-2 gap-2">{actions}</div>}
     </GlassPanel>
   );
 }

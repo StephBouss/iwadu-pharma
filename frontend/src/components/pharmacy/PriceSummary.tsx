@@ -30,7 +30,9 @@ export interface PriceSummaryProps {
 }
 
 export function PriceSummary({ total, coverage, className }: PriceSummaryProps) {
-  const remaining = coverage ? total - coverage.amount : total;
+  // Jamais un reste à payer négatif : la prise en charge ne dépasse pas le total.
+  const covered = coverage ? Math.min(Math.max(coverage.amount, 0), total) : 0;
+  const remaining = total - covered;
   const coverageDetail = coverage
     ? [`${coverage.ratePercent}${NBSP}%`, coverage.insurerName].filter(Boolean).join(' · ')
     : null;
@@ -44,7 +46,7 @@ export function PriceSummary({ total, coverage, className }: PriceSummaryProps) 
     >
       <div className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-4">
-          <span className="type-body text-ink">Total de l’ordonnance</span>
+          <span className="type-body text-ink">Prix de l’ordonnance ici</span>
           <Amount value={total} />
         </div>
 
@@ -55,7 +57,7 @@ export function PriceSummary({ total, coverage, className }: PriceSummaryProps) 
               <span className="type-body-small text-ink-muted">{coverageDetail}</span>
             </span>
             <span className="type-body-strong whitespace-nowrap text-ink-muted tabular-nums">
-              {formatFcfa(-coverage.amount)}
+              {formatFcfa(-covered)}
             </span>
           </div>
         )}
@@ -74,7 +76,7 @@ export function PriceSummary({ total, coverage, className }: PriceSummaryProps) 
         <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-verify" />
         <span>
           {coverage
-            ? 'Prise en charge à confirmer en pharmacie.'
+            ? 'Estimation à confirmer en pharmacie.'
             : 'Prix indicatif, à confirmer en pharmacie.'}
         </span>
       </p>

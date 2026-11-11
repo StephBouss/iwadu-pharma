@@ -1,15 +1,16 @@
 import type { ReactNode } from 'react';
-import { CircleX, Info, TriangleAlert, WifiOff, type LucideIcon } from 'lucide-react';
+import { CircleCheck, CircleX, Info, TriangleAlert, WifiOff, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Charte V1.0 — messages en aplat, titre court + phrase qui dit quoi faire
 // ensuite. Ex. : « Paiement refusé — Aucun montant n'a été débité. Vérifiez
 // votre solde puis réessayez. »
 
-export type MessageTone = 'info' | 'offline' | 'warning' | 'error';
+export type MessageTone = 'info' | 'success' | 'offline' | 'warning' | 'error';
 
 const TONES: Record<MessageTone, { icon: LucideIcon; box: string; iconClass: string }> = {
   info: { icon: Info, box: 'bg-verify-soft', iconClass: 'text-verify' },
+  success: { icon: CircleCheck, box: 'bg-available-soft', iconClass: 'text-available' },
   offline: { icon: WifiOff, box: 'bg-unavailable-soft', iconClass: 'text-ink-muted' },
   warning: { icon: TriangleAlert, box: 'bg-low-soft', iconClass: 'text-low' },
   error: { icon: CircleX, box: 'bg-error-soft', iconClass: 'text-error' },
