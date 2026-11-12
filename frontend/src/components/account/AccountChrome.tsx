@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   BookOpen,
+  Camera,
   LayoutDashboard,
   Moon,
   Receipt,
@@ -21,6 +22,7 @@ import { activeNavId, type DashboardNavItem } from '@/components/dashboard/types
 
 const ACCOUNT_NAV: readonly DashboardNavItem[] = [
   { id: 'home', label: 'Mon espace', href: '/compte', icon: LayoutDashboard },
+  { id: 'new', label: 'Nouvelle ordonnance', href: '/ordonnance', icon: Camera },
   { id: 'carnet', label: 'Carnet d’ordonnances', href: '/compte/ordonnances', icon: BookOpen },
   { id: 'pass', label: 'Pass', href: '/compte/pass', icon: Sparkles },
   { id: 'receipts', label: 'Reçus', href: '/compte/paiements', icon: Receipt },
