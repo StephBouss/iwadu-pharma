@@ -108,7 +108,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         return error(
           'NAME_VISIBLE',
           422,
-          'Nous avons vu un nom sur la photo. Elle a été effacée. Merci de la refaire sans les noms.',
+          'Nous avons vu un nom sur la photo (patient, médecin ou tampon). Elle a été effacée. Recadrez sur la seule liste des médicaments, puis réessayez.',
         );
       }
       return outcome.reason === 'unreadable'

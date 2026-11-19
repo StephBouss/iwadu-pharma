@@ -100,6 +100,26 @@ export async function cropAndCompress(src: Source, rect: CropRect): Promise<Blob
   throw new PhotoFormatError('size');
 }
 
+/**
+ * Photo tournée d'un quart de tour vers la gauche : le cas courant d'une
+ * ordonnance à l'italienne photographiée téléphone droit (le haut de la
+ * feuille se retrouve à droite). Grand côté limité à 3 000 px.
+ */
+export function rotateSource(src: Source): HTMLCanvasElement {
+  const scale = Math.min(1, 3000 / Math.max(src.width, src.height));
+  const w = Math.round(src.width * scale);
+  const h = Math.round(src.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = h;
+  canvas.height = w;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new PhotoFormatError('canvas');
+  ctx.translate(0, w);
+  ctx.rotate(-Math.PI / 2);
+  ctx.drawImage(src, 0, 0, w, h);
+  return canvas;
+}
+
 /** Image affichable (aperçu) d'une source, sans la modifier. */
 export async function previewUrl(src: Source): Promise<string> {
   const canvas = document.createElement('canvas');

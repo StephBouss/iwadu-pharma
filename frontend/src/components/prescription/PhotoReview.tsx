@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { Crop, RotateCcw, Send } from 'lucide-react';
+import { Camera, Crop, RotateCcw, Send } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { CropRect } from '@/lib/client/image';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,7 @@ export function PhotoReview({
   onDevice = false,
   onConfirm,
   onRetake,
+  onRotate,
 }: {
   imageUrl: string;
   initialRect: CropRect;
@@ -38,6 +39,8 @@ export function PhotoReview({
   onDevice?: boolean | undefined;
   onConfirm: (rect: CropRect) => void;
   onRetake: () => void;
+  /** Tourne la photo d'un quart de tour (ordonnance photographiée de côté). */
+  onRotate?: (() => void) | undefined;
 }) {
   const [rect, setRect] = useState<CropRect>(initialRect);
   const [editing, setEditing] = useState(false);
@@ -112,7 +115,8 @@ export function PhotoReview({
           {onDevice
             ? 'Seule la zone encadrée sera lue, dans votre téléphone.'
             : 'Seule la zone encadrée sera envoyée pour la lecture.'}{' '}
-          Le nom du patient et celui du médecin ne doivent pas y apparaître.
+          Le nom du patient, celui du médecin et le tampon ne doivent pas y apparaître.
+          {onRotate && ' Photo de côté ? Tournez-la pour que la liste se lise de haut en bas.'}
         </p>
       </div>
 
@@ -181,12 +185,24 @@ export function PhotoReview({
         >
           {editing ? 'Terminer' : 'Recadrer'}
         </Button>
+        {onRotate && (
+          <Button
+            variant="secondary"
+            size="sm"
+            leadingIcon={<RotateCcw aria-hidden />}
+            onClick={onRotate}
+            disabled={sending}
+          >
+            Tourner
+          </Button>
+        )}
         <Button
           variant="secondary"
           size="sm"
-          leadingIcon={<RotateCcw aria-hidden />}
+          leadingIcon={<Camera aria-hidden />}
           onClick={onRetake}
           disabled={sending}
+          className={onRotate ? 'col-span-2' : undefined}
         >
           Refaire la photo
         </Button>
@@ -202,6 +218,11 @@ export function PhotoReview({
           ? (sendingLabel ?? 'Lecture de vos médicaments…')
           : 'Aucun nom n’est visible, lire la liste'}
       </Button>
+      {sending && !onDevice && (
+        <p className="type-caption text-center text-ink-muted" role="status">
+          Une ordonnance écrite à la main peut demander jusqu’à une minute de lecture.
+        </p>
+      )}
     </div>
   );
 }

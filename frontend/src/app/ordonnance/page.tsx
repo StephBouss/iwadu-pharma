@@ -29,7 +29,11 @@ const DEPARTS = ['photo', 'fichier', 'fichier-depose', 'saisie'] as const;
 type Depart = (typeof DEPARTS)[number];
 
 const TIPS = [
-  { icon: EyeOff, title: 'Sans les noms', desc: 'Ni le patient, ni le médecin dans le cadre' },
+  {
+    icon: EyeOff,
+    title: 'Sans les noms',
+    desc: 'Ni le patient, ni le médecin, ni le tampon dans le cadre',
+  },
   { icon: Crop, title: 'Cadrage', desc: 'Toute la liste des médicaments dans le cadre' },
   { icon: Sun, title: 'Éclairage', desc: 'Lumière naturelle, pas d’ombre' },
   { icon: Square, title: 'Angle', desc: 'Face à face, ordonnance bien à plat' },

@@ -27,6 +27,7 @@ import {
   previewUrl,
   releaseSource,
   renderPdf,
+  rotateSource,
   type CropRect,
   type Source,
 } from '@/lib/client/image';
@@ -233,6 +234,21 @@ export function PrescriptionJourney({
       setReadMessage({
         tone: 'warning',
         text: 'Cette image n’a pas pu être ouverte. Reprenez la photo, ou choisissez une image JPG ou PNG.',
+      });
+    }
+  }
+
+  /** Quart de tour : l'ancienne photo est libérée par l'effet ci-dessus. */
+  async function rotatePhoto() {
+    if (photo.kind !== 'review') return;
+    try {
+      const rotated = rotateSource(photo.source);
+      const url = await previewUrl(rotated);
+      setPhoto({ kind: 'review', source: rotated, url, note: photo.note });
+    } catch {
+      setReadMessage({
+        tone: 'warning',
+        text: 'La photo n’a pas pu être tournée. Reprenez-la dans le bon sens.',
       });
     }
   }
@@ -484,7 +500,7 @@ export function PrescriptionJourney({
                 <ShieldCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-error" />
                 <span>
                   Photographiez uniquement la liste des médicaments et les quantités. Le nom du
-                  patient et celui du médecin ne doivent pas apparaître.
+                  patient, celui du médecin et le tampon ne doivent pas apparaître.
                 </span>
               </p>
               {readMessage && readMessage.tone === 'warning' && (
@@ -499,6 +515,8 @@ export function PrescriptionJourney({
           )}
           {photo.kind === 'review' && (
             <PhotoReview
+              // Nouvelle photo (ou photo tournée) : le cadre repart de la bande par défaut.
+              key={photo.url}
               imageUrl={photo.url}
               initialRect={DEFAULT_BAND}
               sending={reading}
@@ -511,6 +529,7 @@ export function PrescriptionJourney({
               onDevice={deviceReader && !simulatedReader}
               onConfirm={(rect) => void send(rect)}
               onRetake={() => setPhoto({ kind: 'capture' })}
+              onRotate={() => void rotatePhoto()}
             />
           )}
           {photo.kind === 'done' && (
