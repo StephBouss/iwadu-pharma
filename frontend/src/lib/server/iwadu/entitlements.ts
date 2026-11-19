@@ -131,6 +131,11 @@ export async function aiReadsAllowance(
   if (viewer.user && (await activePass(viewer.user.id, now))) {
     return { allowed: true, remaining: null, scope: 'pass' };
   }
+  // Limite coupée dans le back-office (période d'essais) : rien n'est compté.
+  // Paramètre absent : la limite reste active.
+  if (settings['ai.dailyLimitOn'] === false) {
+    return { allowed: true, remaining: null, scope: 'free' };
+  }
   const perDay = settings['ai.freeReadsPerDay'] ?? 0;
   const or: Prisma.PrescriptionReadWhereInput[] = [];
   if (viewer.user) or.push({ userId: viewer.user.id });

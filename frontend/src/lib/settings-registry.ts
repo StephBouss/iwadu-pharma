@@ -151,6 +151,13 @@ export const SETTINGS = {
     group: 'Recherche et stocks',
     type: 'count',
   },
+  'ai.dailyLimitOn': {
+    label: 'Limite quotidienne des lectures par l’IA',
+    help: 'Coupée, les lectures ne sont plus comptées par jour (pendant les essais). À réactiver avant le lancement. Vide : limite active.',
+    group: 'Recherche et stocks',
+    type: 'boolean',
+    optional: true,
+  },
   'search.radiusKm': { label: 'Rayon de recherche', group: 'Recherche et stocks', type: 'km' },
   'stock.lowMax': {
     label: 'Stock faible jusqu’à',
