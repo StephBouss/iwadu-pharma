@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import { withSentryConfig } from '@sentry/nextjs';
+import { withSentryConfig } from '@sentry/nextjs/config';
 
 // Static security headers applied to every response.
 // Set via next.config.ts (not middleware.ts) so Vercel's edge can serve them
@@ -69,16 +69,21 @@ const config: NextConfig = {
 // Sentry build-time wrapper. Uploads source maps when SENTRY_AUTH_TOKEN +
 // SENTRY_ORG + SENTRY_PROJECT are present (typically only in CI). Without
 // those env vars the wrapper still works — it just skips the upload step.
-// silent:true keeps the build log clean when nothing is configured.
+// Without a token, release creation and source-map upload are switched off
+// and the plugin stays silent, so the build log has no « No auth token »
+// warnings. (`disableLogger` was dropped: deprecated, and its replacement
+// `webpack.treeshake.removeDebugLogging` does not apply to Turbopack.)
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+
 export default withSentryConfig(config, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  silent: !process.env.CI,
+  authToken: sentryAuthToken,
+  silent: !sentryAuthToken,
   // Tunnel client requests through a Next.js route to bypass ad-blockers
   // that filter direct Sentry calls. Off by default — turn on if your
   // user base has heavy ad-blocker usage.
   // tunnelRoute: '/monitoring',
-  sourcemaps: { deleteSourcemapsAfterUpload: true },
-  disableLogger: true,
+  release: { create: Boolean(sentryAuthToken) },
+  sourcemaps: { disable: !sentryAuthToken, deleteSourcemapsAfterUpload: true },
 });
