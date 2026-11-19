@@ -142,13 +142,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const lines = outcome.lines.map((l) => {
       const match = matchProduct({ name: l.name, dosage: l.dosage }, catalog);
       const product = match.productId ? byId.get(match.productId) : undefined;
-      // En cas de doute, deux ou trois propositions du catalogue.
-      const candidates = product
+      // En cas de doute, deux ou trois propositions du catalogue : d'après le
+      // nom écrit, puis d'après la substance active d'un nom de marque
+      // (Doliprane → paracétamol). Le patient choisit ; rien n'est remplacé
+      // d'office.
+      const ids = product
         ? []
-        : matchCandidates({ name: l.name, dosage: l.dosage }, catalog).flatMap((id) => {
-            const c = byId.get(id);
-            return c ? [{ id: c.id, label: productLabel(c) }] : [];
-          });
+        : [
+            ...matchCandidates({ name: l.name, dosage: l.dosage }, catalog),
+            ...(l.generic ? matchCandidates({ name: l.generic, dosage: l.dosage }, catalog) : []),
+          ];
+      const candidates = [...new Set(ids)].slice(0, 3).flatMap((id) => {
+        const c = byId.get(id);
+        return c ? [{ id: c.id, label: productLabel(c) }] : [];
+      });
       return {
         name: l.name,
         dosage: l.dosage,

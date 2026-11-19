@@ -548,9 +548,14 @@ export function PrescriptionJourney({
           headingRef={linesRef}
           error={errors.lines}
         >
-          {readMessage && (readMessage.tone === 'info' || !photoEnabled) && (
-            <Message tone={readMessage.tone} title={readMessage.text} />
-          )}
+          {/* Un avertissement s'affiche ici quand le bloc photo est caché
+              (ex. lectures du jour épuisées : la saisie manuelle prend le relais). */}
+          {readMessage &&
+            (readMessage.tone === 'info' ||
+              !photoEnabled ||
+              (manual && photo.kind === 'capture')) && (
+              <Message tone={readMessage.tone} title={readMessage.text} />
+            )}
           {simulatedReader && readId && (
             <p className="type-caption text-ink-muted">
               Démonstration · lecture simulée, lignes d’exemple.

@@ -18,6 +18,7 @@ export const AI_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-flash';
 
 const Line = z.object({
   nom: z.string(),
+  dci: z.string().nullable().optional(),
   dosage: z.string().nullable().optional(),
   forme: z.string().nullable().optional(),
   quantite: z.number().int().nullable().optional(),
@@ -32,6 +33,12 @@ const Reading = z.object({
 
 export interface ReadLine {
   name: string;
+  /**
+   * Substance active quand le nom écrit est un nom de marque (Doliprane →
+   * paracétamol). Sert seulement à proposer des médicaments du catalogue :
+   * jamais à remplacer d'office ce qui est écrit.
+   */
+  generic: string | null;
   dosage: string | null;
   form: string | null;
   quantity: number;
@@ -53,9 +60,11 @@ export type ImageInput = { data: string; mediaType: 'image/jpeg' | 'image/png' |
 
 const SYSTEM = `Tu lis la photo d'une liste de médicaments prescrits, en français, en Afrique francophone.
 Réponds uniquement par un objet JSON de la forme :
-{"lisible": true, "nom_personne_visible": false, "lignes": [{"nom": "...", "dosage": "...", "forme": "...", "quantite": 1, "confiance": 0.9}]}
+{"lisible": true, "nom_personne_visible": false, "lignes": [{"nom": "...", "dci": "...", "dosage": "...", "forme": "...", "quantite": 1, "confiance": 0.9}]}
 Règles :
-- Une ligne par médicament : nom (DCI ou nom commercial, tel qu'écrit), dosage (ex. « 500 mg ») ou null, forme (comprimé, sirop, gélule…) ou null, quantite = nombre de boîtes à délivrer (1 si non précisé ; une posologie comme « 3 fois par jour » n'est pas un nombre de boîtes), confiance entre 0 et 1.
+- Une ligne par médicament : nom (DCI ou nom commercial, tel qu'écrit), dci (la substance active quand le nom écrit est un nom commercial, ex. Doliprane → paracétamol, Augmentin → amoxicilline + acide clavulanique ; null si le nom écrit est déjà la DCI ou si tu ne la connais pas avec certitude), dosage (ex. « 500 mg ») ou null, forme (comprimé, sirop, gélule…) ou null, quantite = nombre de boîtes à délivrer (1 si non précisé ; une posologie comme « 3 fois par jour » n'est pas un nombre de boîtes), confiance entre 0 et 1.
+- Relève tous les médicaments écrits, dans l'ordre de l'ordonnance, imprimés ou manuscrits. N'ajoute jamais un médicament qui n'est pas écrit.
+- La quantité est le nombre écrit devant le conditionnement, quelle que soit son écriture : le mot « boîte » peut être abrégé ou mal orthographié (« btes », « bte », « bt », « boites »…), de même que « flacon », « tube » ou « ampoule ». Reconnais le mot dans sa globalité, pas son orthographe exacte. « x2 », « N° 2 » ou « Qté : 2 » donnent aussi quantite = 2.
 - Ne corrige pas et ne complète pas un nom que tu ne lis pas : baisse la confiance.
 - nom_personne_visible = true si un nom ou un prénom de personne (patient, médecin) apparaît sur l'image. N'écris jamais ce nom.
 - Si l'image n'est pas une liste de médicaments ou est illisible : "lisible": false et "lignes": [].
@@ -63,9 +72,14 @@ Règles :
 
 export type ReaderKind = 'deepseek' | 'simulated' | null;
 
+/**
+ * La vraie lecture l'emporte toujours : dès que DEEPSEEK_API_KEY est saisie,
+ * PRESCRIPTION_READER=simulated est ignoré. Sinon, un réglage oublié sur le
+ * serveur renverrait la liste d'exemple au lieu de lire l'ordonnance.
+ */
 export function readerKind(): ReaderKind {
-  if (process.env.PRESCRIPTION_READER === 'simulated') return 'simulated';
   if (process.env.DEEPSEEK_API_KEY) return 'deepseek';
+  if (process.env.PRESCRIPTION_READER === 'simulated') return 'simulated';
   return null;
 }
 
@@ -79,6 +93,7 @@ function clean(lines: z.infer<typeof Line>[]): ReadLine[] {
     .slice(0, 20)
     .map((l) => ({
       name: l.nom.trim().slice(0, 80),
+      generic: l.dci?.trim().slice(0, 80) || null,
       dosage: l.dosage?.trim().slice(0, 40) || null,
       form: l.forme?.trim().slice(0, 40) || null,
       quantity: Math.min(Math.max(Math.round(l.quantite ?? 1), 1), 20),
