@@ -41,8 +41,8 @@ import { ProductPicker, type PickedProduct } from './ProductPicker';
 // Parcours « Votre ordonnance », sur une seule page (règle produit) :
 //   1. la photo : consigne, cadre de visée, écran « Vérifiez votre photo »
 //      (recadrer, refaire, envoyer) — seule la zone gardée est envoyée ;
-//   2. la liste lue (dans le téléphone, sans IA ; l'IA seulement en secours
-//      si elle est activée), à corriger, puis la position (ou le quartier).
+//   2. la liste lue (par l'IA ; ou dans le téléphone si PRESCRIPTION_READER=device,
+//      l'IA passant alors en secours), à corriger, puis la position (ou le quartier).
 // Un seul bouton principal visible à la fois. Si la connexion se coupe, la
 // liste est gardée dans l'onglet et le parcours reprend où il s'est arrêté.
 
@@ -111,8 +111,10 @@ function fromInitial(items: InitialItem[]): Line[] {
 }
 
 export interface PrescriptionJourneyProps {
-  /** Lecture de la photo proposée (dans le téléphone). */
+  /** Lecture de la photo proposée. */
   photoEnabled: boolean;
+  /** Lecture dans le téléphone (Tesseract) plutôt que par l'IA. Inactive par défaut. */
+  deviceReader: boolean;
   /** Lecture par IA en secours quand le téléphone ne reconnaît rien. */
   aiFallback: boolean;
   simulatedReader: boolean;
@@ -128,6 +130,7 @@ export interface PrescriptionJourneyProps {
 
 export function PrescriptionJourney({
   photoEnabled,
+  deviceReader,
   aiFallback,
   simulatedReader,
   loggedIn,
@@ -318,7 +321,8 @@ export function PrescriptionJourney({
     setProgress(null);
     const source = photo.source;
     try {
-      if (simulatedReader) {
+      // Par défaut, la zone encadrée est lue par l'IA côté serveur.
+      if (simulatedReader || !deviceReader) {
         applyReading(await readWithAi(source, rect));
         return;
       }
@@ -504,6 +508,7 @@ export function PrescriptionJourney({
                   : `Lecture de la photo… ${progress} %`
               }
               note={photo.note}
+              onDevice={deviceReader && !simulatedReader}
               onConfirm={(rect) => void send(rect)}
               onRetake={() => setPhoto({ kind: 'capture' })}
             />

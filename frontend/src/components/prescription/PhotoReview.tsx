@@ -24,6 +24,7 @@ export function PhotoReview({
   sending,
   sendingLabel,
   note,
+  onDevice = false,
   onConfirm,
   onRetake,
 }: {
@@ -33,6 +34,8 @@ export function PhotoReview({
   /** Texte du bouton pendant la lecture, ex. « Lecture… 40 % ». */
   sendingLabel?: string | undefined;
   note?: string | null | undefined;
+  /** La zone est lue dans le téléphone (sinon envoyée pour lecture). */
+  onDevice?: boolean | undefined;
   onConfirm: (rect: CropRect) => void;
   onRetake: () => void;
 }) {
@@ -106,8 +109,10 @@ export function PhotoReview({
       <div className="flex flex-col gap-1">
         <h3 className="type-title-2 text-ink">Vérifiez votre photo</h3>
         <p className="type-body-small text-ink-muted">
-          Seule la zone encadrée sera lue, dans votre téléphone. Le nom du patient et celui du
-          médecin ne doivent pas y apparaître.
+          {onDevice
+            ? 'Seule la zone encadrée sera lue, dans votre téléphone.'
+            : 'Seule la zone encadrée sera envoyée pour la lecture.'}{' '}
+          Le nom du patient et celui du médecin ne doivent pas y apparaître.
         </p>
       </div>
 

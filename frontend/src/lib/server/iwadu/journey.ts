@@ -20,6 +20,7 @@ export async function loadJourney(
   const state = pass ? await passState(pass, settings, now) : null;
   const preview = await previewAllowance(viewer, settings, now);
   const price = settings['price.unlock'];
+  const deviceReader = process.env.PRESCRIPTION_READER === 'device';
 
   let offer: string | null;
   let submitLabel = 'Voir le résultat gratuit';
@@ -67,9 +68,12 @@ export async function loadJourney(
   }
 
   return {
-    // Lecture dans le téléphone (gratuite), toujours proposée.
-    photoEnabled: true,
-    aiFallback: readerKind() === 'deepseek',
+    // Lecture par l'IA (DeepSeek) dès que sa clé est saisie. La lecture dans
+    // le téléphone (Tesseract) est gardée mais inactive : elle ne sert que
+    // si PRESCRIPTION_READER=device, l'IA passant alors en secours.
+    photoEnabled: deviceReader || readerKind() !== null,
+    deviceReader,
+    aiFallback: deviceReader && readerKind() === 'deepseek',
     simulatedReader: readerKind() === 'simulated',
     loggedIn: Boolean(viewer.user),
     initialItems,
