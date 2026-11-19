@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { Check, Gift, ShieldCheck } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { PublicShell } from '@/components/layout/PublicShell';
-import { ButtonLink } from '@/components/ui/Button';
+import { OfferShowcase, offerGuarantees } from '@/components/public/OfferShowcase';
 import { GlassDark } from '@/components/ui/GlassDark';
-import { GlassPanel } from '@/components/ui/GlassPanel';
-import { formatFcfa } from '@/lib/format';
 import { buildOffers } from '@/lib/server/iwadu/offers';
 import { getSettings } from '@/lib/server/iwadu/settings';
 
@@ -62,76 +60,19 @@ export default async function PricingPage() {
           </GlassDark>
         </div>
       }
-      className="pt-10 md:pt-14"
+      className="gap-10 pt-14 md:gap-14 md:pt-20"
     >
-      <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {offers.map((o) => (
-          <li key={o.purpose} className="flex">
-            <GlassPanel
-              className={
-                o.purpose === 'PASS_FAMILY'
-                  ? 'flex w-full flex-col gap-3 p-6 ring-2 ring-action'
-                  : 'flex w-full flex-col gap-3 p-6'
-              }
-            >
-              <div className="flex flex-col">
-                <h2 className="type-title-2 text-ink">{o.title}</h2>
-                {o.tagline && <p className="type-body-small text-action">{o.tagline}</p>}
-              </div>
-              <p className="font-display text-3xl font-bold text-brand tabular-nums">
-                {formatFcfa(o.price)}
-              </p>
-              <p className="type-body-small text-ink-muted">{o.period}</p>
-              <p className="type-body text-ink">
-                <strong>{o.searches}</strong>
-                {o.perSearch ? `, soit ${formatFcfa(o.perSearch)} la recherche` : ''}
-              </p>
-              {o.rule && <p className="type-body-small text-ink-muted">{o.rule}</p>}
-              <ul className="flex flex-col gap-1.5">
-                {o.points.map((p) => (
-                  <li key={p} className="type-body-small flex gap-2 text-ink">
-                    <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-action" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto pt-2">
-                {o.purpose === 'UNLOCK' ? (
-                  <ButtonLink href="/ordonnance?depart=photo" fullWidth>
-                    Photographier mon ordonnance
-                  </ButtonLink>
-                ) : (
-                  <ButtonLink
-                    href={`/compte/pass?offre=${o.purpose}`}
-                    variant="secondary"
-                    fullWidth
-                  >
-                    Prendre le {o.title}
-                  </ButtonLink>
-                )}
-              </div>
-            </GlassPanel>
-          </li>
-        ))}
-      </ul>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {s['account.firstUnlockOffered'] && (
-          <GlassPanel className="flex items-start gap-4 p-6">
-            <Gift aria-hidden className="mt-0.5 size-6 shrink-0 text-action" />
-            <p className="type-body text-ink">
-              <strong>Compte gratuit :</strong> votre première ordonnance complète est offerte, une
-              seule fois par compte.
-            </p>
-          </GlassPanel>
-        )}
-        {[s['guarantee.tripText'], s['guarantee.passRefundText']].filter(Boolean).map((t) => (
-          <GlassPanel key={t} className="flex items-start gap-4 p-6">
-            <ShieldCheck aria-hidden className="mt-0.5 size-6 shrink-0 text-available" />
-            <p className="type-body text-ink">{t}</p>
-          </GlassPanel>
-        ))}
-      </div>
+      <OfferShowcase
+        offers={offers}
+        primaryCta
+        title="Choisissez votre formule"
+        subtitle="Sans abonnement : un Pass s’arrête tout seul à la fin de sa période. Les médicaments se paient en pharmacie."
+        guarantees={offerGuarantees({
+          tripText: s['guarantee.tripText'],
+          passRefundText: s['guarantee.passRefundText'],
+          firstUnlockOffered: s['account.firstUnlockOffered'],
+        })}
+      />
       <p className="type-body-small text-ink-muted">
         Paiement par Airtel Money ou Moov Money. Rouvrir une ordonnance déjà débloquée, refaire le
         calcul pour une autre pharmacie ou une autre assurance, consulter les gardes : gratuit.

@@ -7,18 +7,14 @@ import {
   Eye,
   FileText,
   FolderOpen,
-  Gift,
   MapPin,
   Moon,
   Search,
   Shield,
-  ShieldCheck,
   ShoppingBag,
   Smartphone,
-  User,
   Users,
   X,
-  Zap,
 } from 'lucide-react';
 import { HeroBanner } from '@/components/brand/HeroBanner';
 import { DropZone } from '@/components/home/DropZone';
@@ -27,9 +23,11 @@ import { SiteFooter } from '@/components/layout/SiteFooter';
 import { SiteHeader } from '@/components/layout/SiteHeader';
 import { CallLink, DirectionsLink } from '@/components/pharmacy/PharmacyActions';
 import { FaqList, faqItems } from '@/components/public/Faq';
+import { OfferShowcase, offerGuarantees } from '@/components/public/OfferShowcase';
 import { ButtonLink } from '@/components/ui/Button';
 import { GlassDark } from '@/components/ui/GlassDark';
 import { GlassPanel } from '@/components/ui/GlassPanel';
+import { HintPoint } from '@/components/ui/HintPoint';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { formatFcfa } from '@/lib/format';
 import { buildOffers } from '@/lib/server/iwadu/offers';
@@ -48,22 +46,53 @@ export const metadata: Metadata = {
   title: { absolute: 'Iwadu Pharma — la pharmacie qui a toute votre ordonnance' },
 };
 
-const CHANGES: [string, string][] = [
-  ['Je fais plusieurs pharmacies pour un seul médicament', 'Je vois qui a toute mon ordonnance'],
-  ['Je découvre le prix à la caisse', 'Je connais le prix avant de sortir'],
-  ['Je ne sais pas ce que mon assurance prend', 'Le reste à payer est estimé avec mon taux'],
-  ['Je cherche la pharmacie de garde, le soir', 'Les gardes de la nuit, gratuitement'],
-  ['J’ai peur de payer pour rien', 'Je vois le résultat avant de payer'],
-  ['Les applications, ce n’est pas pour moi', 'Une photo, une liste à vérifier, un bouton'],
+// Avant / avec Iwadu Pharma : chaque point a son explication, dans une
+// bulle discrète au survol, au toucher ou au clavier. Côté « Avant », la
+// bulle est rouge : elle dit le problème ou la limite.
+// [avant, avec Iwadu Pharma, explication « avec », explication « avant »]
+const CHANGES: [string, string, string, string][] = [
+  [
+    'Je fais plusieurs pharmacies pour un seul médicament',
+    'Je vois qui a toute mon ordonnance',
+    'Une photo de l’ordonnance suffit : vous voyez quelles pharmacies proches ont tous vos médicaments, et à quelle heure leur stock a été mis à jour.',
+    'Chaque pharmacie visitée coûte du temps et du transport, et le traitement commence parfois en retard.',
+  ],
+  [
+    'Je découvre le prix à la caisse',
+    'Je connais le prix avant de sortir',
+    'Le prix de chaque médicament, pharmacie par pharmacie. Vous choisissez où payer moins, sans vous déplacer.',
+    'Le même médicament peut coûter plus cher d’une pharmacie à l’autre : sans comparer, vous payez le prix annoncé.',
+  ],
+  [
+    'Je ne sais pas ce que mon assurance prend',
+    'Le reste à payer est estimé avec mon taux',
+    'Indiquez votre assurance et votre taux de prise en charge : le montant à payer est calculé pour chaque pharmacie. C’est une estimation, confirmée par le pharmacien.',
+    'Sans connaître le reste à payer, difficile de savoir combien emporter avant de partir.',
+  ],
+  [
+    'Je cherche la pharmacie de garde, le soir',
+    'Les gardes de la nuit, gratuitement',
+    'Les pharmacies de garde, avec leur adresse et leur téléphone. Sans compte et sans payer.',
+    'La nuit ou le week-end, trouver la pharmacie ouverte prend du temps, au moment où vous en avez le plus besoin.',
+  ],
+  [
+    'J’ai peur de payer pour rien',
+    'Je vois le résultat avant de payer',
+    'L’aperçu gratuit vous dit combien de pharmacies ont toute l’ordonnance et combien prévoir. Vous payez seulement si vous voulez les noms et les prix.',
+    'Payer avant de savoir si une pharmacie a vos médicaments, c’est risquer de perdre votre argent.',
+  ],
+  [
+    'Les applications, ce n’est pas pour moi',
+    'Une photo, une liste à vérifier, un bouton',
+    'Rien à installer : tout se fait dans le navigateur du téléphone. Vous pouvez aussi taper le nom de vos médicaments.',
+    'Comptes à créer, formulaires longs, applications à installer : beaucoup abandonnent avant d’avoir une réponse.',
+  ],
 ];
 
 export default async function Home() {
   const s = await getSettings();
   const offers = buildOffers(s);
   const unlock = offers.find((o) => o.purpose === 'UNLOCK');
-  const solo = offers.find((o) => o.purpose === 'PASS_SOLO');
-  const family = offers.find((o) => o.purpose === 'PASS_FAMILY');
-  const annual = offers.find((o) => o.purpose === 'PASS_FAMILY_ANNUAL');
   const freeCount = s['preview.freeCount'];
   const windowDays = s['preview.windowDays'];
 
@@ -229,31 +258,35 @@ export default async function Home() {
           <h2 id="change" className="type-display mb-8 text-center text-brand md:mb-12 md:text-4xl">
             Ce qui change pour vous
           </h2>
-          <GlassPanel className="overflow-hidden">
+          <GlassPanel>
             <div className="hidden grid-cols-2 md:grid">
-              <p className="type-body-strong bg-muted px-8 py-4 text-ink-muted md:text-lg">Avant</p>
-              <p className="type-body-strong bg-available-soft px-8 py-4 text-ink md:text-lg">
+              <p className="type-body-strong rounded-tl-card bg-muted px-8 py-4 text-ink-muted md:text-lg">
+                Avant
+              </p>
+              <p className="type-body-strong rounded-tr-card bg-available-soft px-8 py-4 text-ink md:text-lg">
                 Avec Iwadu Pharma
               </p>
             </div>
             <ul>
-              {CHANGES.map(([before, after]) => (
+              {CHANGES.map(([before, after, hint, beforeHint]) => (
                 <li
                   key={before}
-                  className="grid border-t border-ink/7 first:border-t-0 md:grid-cols-2 md:first:border-t"
+                  className="group/row grid border-t border-ink/7 first:border-t-0 md:grid-cols-2 md:first:border-t"
                 >
                   <p className="type-body flex items-center gap-3 px-5 pt-4 text-ink-muted md:border-r md:border-ink/7 md:px-8 md:py-5">
                     <X aria-hidden className="size-4.5 shrink-0" />
                     <span>
                       <span className="sr-only">Avant : </span>
-                      {before}
+                      <HintPoint hint={beforeHint} tone="warning">
+                        {before}
+                      </HintPoint>
                     </span>
                   </p>
-                  <p className="type-body flex items-center gap-3 px-5 pt-2 pb-4 font-medium text-ink md:bg-available-soft/30 md:px-8 md:py-5">
+                  <p className="type-body flex items-center gap-3 px-5 pt-2 pb-4 font-medium text-ink md:bg-available-soft/30 md:px-8 md:py-5 md:group-last/row:rounded-br-card">
                     <Check aria-hidden className="size-4.5 shrink-0 text-available" />
                     <span>
                       <span className="sr-only">Avec Iwadu Pharma : </span>
-                      {after}
+                      <HintPoint hint={hint}>{after}</HintPoint>
                     </span>
                   </p>
                 </li>
@@ -306,155 +339,18 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* 5. Offre phare : Pass Famille */}
-        {family && (
-          <HeroBanner decor="light">
-            <section
-              aria-labelledby="offre"
-              className="mx-auto w-full max-w-6xl px-4 py-16 md:px-8 md:py-20"
-            >
-              <h2 id="offre" className="type-display mb-8 text-center md:mb-12 md:text-4xl">
-                Offre phare
-              </h2>
-              <GlassDark className="mx-auto flex max-w-3xl flex-col gap-6 p-6 md:p-12">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                  <div className="flex flex-col gap-1">
-                    <p className="font-display text-2xl font-bold md:text-3xl">
-                      {family.title} {s['pass.durationDays']} jours
-                    </p>
-                    <p className="font-display text-xl font-semibold text-mint">{family.tagline}</p>
-                    <p className="type-body mt-1 text-surface/80">
-                      Pour les familles qui ont souvent des ordonnances.
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:items-end">
-                    <p className="font-display text-4xl font-bold tabular-nums md:text-5xl">
-                      {formatFcfa(family.price)}
-                    </p>
-                    <p className="type-body text-surface/80">{family.period}</p>
-                  </div>
-                </div>
-                <p className="flex flex-wrap items-baseline gap-x-2 rounded-field bg-surface/10 px-4 py-3">
-                  <span className="type-body-strong">{family.searches}</span>
-                  {family.rule && (
-                    <span className="type-body-small text-surface/80">{family.rule}</span>
-                  )}
-                </p>
-                <div>
-                  <p className="type-body-strong mb-3 text-mint">Ce que vous recevez</p>
-                  <ul className="grid gap-3 sm:grid-cols-2">
-                    {[
-                      'Les noms, distances et prix des pharmacies qui ont tout',
-                      'Le reste à payer estimé avec votre assurance',
-                      ...family.points.filter((p) => !p.startsWith('Offert')),
-                    ].map((p) => (
-                      <li key={p} className="type-body flex items-start gap-2 text-surface/90">
-                        <CircleCheck aria-hidden className="mt-0.5 size-4.5 shrink-0 text-mint" />
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <p className="type-body-strong flex items-start gap-2 rounded-field border border-mint/25 bg-mint/12 p-4 text-mint">
-                  <Gift aria-hidden className="mt-0.5 size-4.5 shrink-0" />
-                  Offert : le guide « Comprendre votre prise en charge »
-                </p>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-                  <ButtonLink href="/compte/pass?offre=PASS_FAMILY" tone="dark" variant="secondary">
-                    Prendre le Pass Famille
-                  </ButtonLink>
-                  {s['guarantee.passRefundText'] && (
-                    <p className="type-body-small flex items-center gap-3 rounded-field border border-surface/18 bg-surface/8 p-4 text-surface/85">
-                      <Shield aria-hidden className="size-5 shrink-0 text-mint" />
-                      {s['guarantee.passRefundText']}
-                    </p>
-                  )}
-                </div>
-                {annual && (
-                  <p className="type-body-small text-surface/80">
-                    Aussi en {annual.title} : {formatFcfa(annual.price)} {annual.period}, en un seul
-                    paiement.
-                  </p>
-                )}
-              </GlassDark>
-            </section>
-          </HeroBanner>
-        )}
-
-        {/* 6. Deux formules */}
-        <section
-          aria-label="Autres formules"
-          className="mx-auto grid w-full max-w-6xl gap-4 px-4 pt-16 md:grid-cols-2 md:gap-6 md:px-8 md:pt-24"
-        >
-          {solo && (
-            <GlassPanel className="flex flex-col gap-2 p-6 md:p-10">
-              <p className="flex items-center gap-3">
-                <span className="flex size-11 items-center justify-center rounded-full bg-mint/20">
-                  <User aria-hidden className="size-5 text-action" />
-                </span>
-                <span className="type-title-1 text-ink">{solo.title}</span>
-              </p>
-              <p className="font-display text-4xl font-bold text-brand tabular-nums">
-                {formatFcfa(solo.price)}
-              </p>
-              <p className="type-body text-ink-muted">{solo.period}</p>
-              <p className="type-body mt-2 text-ink-muted">
-                {solo.searches}
-                {solo.perSearch ? (
-                  <>
-                    , soit <strong className="text-ink">{formatFcfa(solo.perSearch)}</strong> la
-                    recherche
-                  </>
-                ) : null}
-              </p>
-              <ButtonLink
-                href="/compte/pass?offre=PASS_SOLO"
-                variant="secondary"
-                className="mt-4 self-start"
-              >
-                Prendre le Pass Solo
-              </ButtonLink>
-            </GlassPanel>
-          )}
-          {unlock && (
-            <GlassPanel className="flex flex-col gap-2 p-6 md:p-10">
-              <p className="flex items-center gap-3">
-                <span className="flex size-11 items-center justify-center rounded-full bg-mint/20">
-                  <Zap aria-hidden className="size-5 text-action" />
-                </span>
-                <span className="type-title-1 text-ink">{unlock.title}</span>
-              </p>
-              <p className="font-display text-4xl font-bold text-brand tabular-nums">
-                {formatFcfa(unlock.price)}
-              </p>
-              <p className="type-body text-ink-muted">{unlock.period}</p>
-              <p className="type-body mt-2 text-ink-muted">
-                Sans compte. Vous payez seulement quand vous en avez besoin.
-              </p>
-              <ButtonLink href="/ordonnance" variant="secondary" className="mt-4 self-start">
-                Commencer sans compte
-              </ButtonLink>
-            </GlassPanel>
-          )}
-        </section>
-
-        {/* 7. Garanties */}
-        <section
-          aria-label="Nos garanties"
-          className="mx-auto grid w-full max-w-6xl gap-4 px-4 pt-10 pb-16 md:grid-cols-2 md:gap-6 md:px-8 md:pb-24"
-        >
-          {[
-            'Rien à payer si aucune pharmacie n’a votre ordonnance.',
-            ...(s['guarantee.tripText'] ? [s['guarantee.tripText']] : []),
-          ].map((text) => (
-            <GlassPanel key={text} className="flex items-center gap-5 p-6 md:p-8">
-              <span className="flex size-13 shrink-0 items-center justify-center rounded-full bg-mint/20">
-                <ShieldCheck aria-hidden className="size-6 text-action" />
-              </span>
-              <p className="type-body-strong text-ink md:text-lg">{text}</p>
-            </GlassPanel>
-          ))}
-        </section>
+        {/* 5. Nos offres : toutes les formules, le Pass Famille mis en avant */}
+        <div className="mx-auto w-full max-w-6xl px-4 py-16 md:px-8 md:py-24">
+          <OfferShowcase
+            offers={offers}
+            guarantees={offerGuarantees({
+              tripText: s['guarantee.tripText'],
+              passRefundText: s['guarantee.passRefundText'],
+              firstUnlockOffered: s['account.firstUnlockOffered'],
+            })}
+            subtitle="Sans abonnement, payable par Airtel Money ou Moov Money. Les médicaments se paient en pharmacie."
+          />
+        </div>
 
         {/* 8. Pharmacies de garde */}
         {duty.length > 0 && (
