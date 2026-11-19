@@ -15,11 +15,30 @@ export interface MatchResult {
   ambiguous: boolean;
 }
 
+/**
+ * Clé de dosage comparable, en milligrammes quand l'unité est un poids :
+ * « 1 g », « 1000 mg » et « 1000mg » donnent « 1000 » ; « 0,5 g » donne
+ * « 500 » ; « 20/120 mg » donne « 20/120 ». Les autres unités (ml, UI…)
+ * gardent leur nombre tel quel.
+ */
 function digits(text: string | null | undefined): string {
-  return (text ?? '')
-    .replace(/[^0-9/]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
+  const t = (text ?? '').toLowerCase().replace(/,/g, '.');
+  const groups = t.matchAll(
+    /(\d+(?:\.\d+)?(?:\s*\/\s*\d+(?:\.\d+)?)*)\s*(mg|mcg|µg|ug|g)?(?![a-zà-ÿ])/g,
+  );
+  return [...groups]
+    .map(([, nums = '', unit]) =>
+      nums
+        .split('/')
+        .map((n) => {
+          let v = Number.parseFloat(n);
+          if (unit === 'g') v *= 1000;
+          else if (unit === 'mcg' || unit === 'µg' || unit === 'ug') v /= 1000;
+          return String(Number(v.toFixed(3)));
+        })
+        .join('/'),
+    )
+    .join(' ');
 }
 
 export function matchProduct(

@@ -62,4 +62,28 @@ describe('matchCandidates', () => {
   it('aucune proposition pour un nom inconnu', () => {
     expect(matchCandidates({ name: 'Inconnu', dosage: null }, catalog)).toEqual([]);
   });
+  it('« 1000 mg » et « 1 g » sont le même dosage', () => {
+    expect(matchCandidates({ name: 'Paracetamol', dosage: '1000 mg' }, catalog)).toEqual([
+      'p2',
+      'p1',
+    ]);
+  });
+});
+
+describe('dosages écrits autrement', () => {
+  const catalog = [
+    { id: 'p500', name: 'Paracétamol', dosage: '500 mg' },
+    { id: 'p1g', name: 'Paracétamol', dosage: '1 g' },
+  ];
+  it('« 1000 mg » trouve « 1 g »', () => {
+    expect(matchProduct({ name: 'Paracétamol', dosage: '1000 mg' }, catalog).productId).toBe('p1g');
+  });
+  it('« 0,5 g » trouve « 500 mg »', () => {
+    expect(matchProduct({ name: 'Paracétamol', dosage: '0,5 g' }, catalog).productId).toBe('p500');
+  });
+  it('dosage collé au nom : « Paracétamol 1000mg »', () => {
+    expect(matchProduct({ name: 'Paracétamol 1000mg', dosage: null }, catalog).productId).toBe(
+      'p1g',
+    );
+  });
 });
