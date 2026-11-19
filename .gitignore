@@ -29,3 +29,4 @@ node-compile-cache/
 
 # Worker pdf.js copié au démarrage (scripts/copy-pdf-worker.mjs)
 frontend/public/pdfjs/
+frontend/public/tesseract/

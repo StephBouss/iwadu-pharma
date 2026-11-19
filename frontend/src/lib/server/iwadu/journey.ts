@@ -2,7 +2,7 @@ import 'server-only';
 import { formatFcfa } from '@/lib/format';
 import { productLabel } from '@/lib/products';
 import { prisma } from '@/lib/server/prisma';
-import { isAiReadingEnabled, readerKind } from './ai-prescription';
+import { readerKind } from './ai-prescription';
 import { activePass, passState, previewAllowance } from './entitlements';
 import { getSettings } from './settings';
 import { getViewer } from './viewer';
@@ -67,7 +67,9 @@ export async function loadJourney(
   }
 
   return {
-    aiEnabled: isAiReadingEnabled(),
+    // Lecture dans le téléphone (gratuite), toujours proposée.
+    photoEnabled: true,
+    aiFallback: readerKind() === 'deepseek',
     simulatedReader: readerKind() === 'simulated',
     loggedIn: Boolean(viewer.user),
     initialItems,

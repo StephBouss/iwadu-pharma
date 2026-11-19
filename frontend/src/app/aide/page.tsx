@@ -73,8 +73,8 @@ export default async function HelpPage() {
           </h2>
           <p className="type-body text-ink-muted">
             Iwadu Pharma vous dit quelle pharmacie près de chez vous a toute votre ordonnance, et
-            combien prévoir, avec ou sans assurance. L’IA aide à lire l’ordonnance ; votre
-            pharmacien la valide toujours.
+            combien prévoir, avec ou sans assurance. La lecture automatique aide à lire l’ordonnance
+            ; votre pharmacien la valide toujours.
           </p>
         </GlassPanel>
 

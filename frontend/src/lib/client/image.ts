@@ -119,3 +119,28 @@ export function releaseSource(src: Source | null): void {
     src.height = 0;
   }
 }
+
+/**
+ * Zone gardée, prête pour la lecture de texte dans le téléphone : niveaux de
+ * gris contrastés, petite écriture agrandie (le texte se lit mieux vers
+ * 2 000 px de large). Reste dans le navigateur : jamais envoyée.
+ */
+export function cropForReading(src: Source, rect: CropRect): HTMLCanvasElement {
+  const { width, height } = sourceSize(src);
+  const sx = Math.round(rect.x * width);
+  const sy = Math.round(rect.y * height);
+  const sw = Math.max(1, Math.round(rect.w * width));
+  const sh = Math.max(1, Math.round(rect.h * height));
+  const scale = Math.min(2.5, 2000 / Math.max(sw, sh));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(sw * scale));
+  canvas.height = Math.max(1, Math.round(sh * scale));
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new PhotoFormatError('canvas');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.filter = 'grayscale(1) contrast(1.4)';
+  ctx.drawImage(src, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  ctx.filter = 'none';
+  return canvas;
+}

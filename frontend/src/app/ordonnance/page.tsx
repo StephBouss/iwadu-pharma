@@ -85,8 +85,9 @@ export default async function PrescriptionPage({
         téléphone, puis recadrée.
       </p>
       <p className="type-caption text-ink-muted">
-        La photo est effacée dès sa lecture. La liste des médicaments est lue par un service situé
-        hors de votre pays ; aucun nom n’y est envoyé.
+        La photo est lue dans votre téléphone et n’est jamais envoyée ni conservée.
+        {journey.aiFallback &&
+          ' Si rien n’est reconnu, elle peut être lue par un service situé hors de votre pays ; aucun nom n’y est envoyé.'}
       </p>
     </GlassPanel>
   );

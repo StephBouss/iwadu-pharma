@@ -15,6 +15,7 @@ export default tseslint.config(
       '**/next-env.d.ts',
       // Worker pdf.js copié depuis node_modules au démarrage (fichier minifié tiers).
       '**/public/pdfjs/**',
+      '**/public/tesseract/**',
       // Examples are illustrative only; copied into projects then restyled.
       // Excluded from lint and typecheck so they don't have to satisfy
       // strict workspace tsconfig (e.g. they reference `@/lib/...` aliases

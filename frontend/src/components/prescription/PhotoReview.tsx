@@ -22,6 +22,7 @@ export function PhotoReview({
   imageUrl,
   initialRect,
   sending,
+  sendingLabel,
   note,
   onConfirm,
   onRetake,
@@ -29,6 +30,8 @@ export function PhotoReview({
   imageUrl: string;
   initialRect: CropRect;
   sending: boolean;
+  /** Texte du bouton pendant la lecture, ex. « Lecture… 40 % ». */
+  sendingLabel?: string | undefined;
   note?: string | null | undefined;
   onConfirm: (rect: CropRect) => void;
   onRetake: () => void;
@@ -103,8 +106,8 @@ export function PhotoReview({
       <div className="flex flex-col gap-1">
         <h3 className="type-title-2 text-ink">Vérifiez votre photo</h3>
         <p className="type-body-small text-ink-muted">
-          Seule la zone encadrée sera envoyée. Le nom du patient et celui du médecin ne doivent pas
-          y apparaître.
+          Seule la zone encadrée sera lue, dans votre téléphone. Le nom du patient et celui du
+          médecin ne doivent pas y apparaître.
         </p>
       </div>
 
@@ -190,7 +193,9 @@ export function PhotoReview({
         onClick={() => onConfirm(rect)}
         className="h-auto min-h-12 py-2 whitespace-normal"
       >
-        {sending ? 'Lecture de vos médicaments…' : 'Aucun nom n’est visible, envoyer'}
+        {sending
+          ? (sendingLabel ?? 'Lecture de vos médicaments…')
+          : 'Aucun nom n’est visible, lire la liste'}
       </Button>
     </div>
   );

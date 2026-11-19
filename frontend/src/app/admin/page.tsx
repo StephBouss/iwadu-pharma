@@ -296,7 +296,7 @@ export default async function AdminDashboardPage() {
         <KpiPanel title="Ordonnances, ce mois" href="/admin/ordonnances" linkLabel="Ordonnances">
           <KpiList
             rows={[
-              { label: 'Lues par l’IA', value: formatGroupedInt(k.prescriptions.aiRead) },
+              { label: 'Photos lues', value: formatGroupedInt(k.prescriptions.aiRead) },
               {
                 label: 'Validées sans correction',
                 value: formatGroupedInt(k.prescriptions.uncorrected),

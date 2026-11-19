@@ -22,6 +22,7 @@ import {
   DEFAULT_BAND,
   PhotoFormatError,
   cropAndCompress,
+  cropForReading,
   decodeImage,
   previewUrl,
   releaseSource,
@@ -29,6 +30,7 @@ import {
   type CropRect,
   type Source,
 } from '@/lib/client/image';
+import { readTextOnDevice } from '@/lib/client/ocr';
 import { takePendingFile } from '@/lib/client/pending-file';
 import { errorMessage, postForm, publicApi } from '@/lib/client/session';
 import { cn } from '@/lib/utils';
@@ -39,7 +41,8 @@ import { ProductPicker, type PickedProduct } from './ProductPicker';
 // Parcours « Votre ordonnance », sur une seule page (règle produit) :
 //   1. la photo : consigne, cadre de visée, écran « Vérifiez votre photo »
 //      (recadrer, refaire, envoyer) — seule la zone gardée est envoyée ;
-//   2. la liste lue par l'IA, à corriger, puis la position (ou le quartier).
+//   2. la liste lue (dans le téléphone, sans IA ; l'IA seulement en secours
+//      si elle est activée), à corriger, puis la position (ou le quartier).
 // Un seul bouton principal visible à la fois. Si la connexion se coupe, la
 // liste est gardée dans l'onglet et le parcours reprend où il s'est arrêté.
 
@@ -108,7 +111,10 @@ function fromInitial(items: InitialItem[]): Line[] {
 }
 
 export interface PrescriptionJourneyProps {
-  aiEnabled: boolean;
+  /** Lecture de la photo proposée (dans le téléphone). */
+  photoEnabled: boolean;
+  /** Lecture par IA en secours quand le téléphone ne reconnaît rien. */
+  aiFallback: boolean;
   simulatedReader: boolean;
   loggedIn: boolean;
   initialItems: InitialItem[];
@@ -121,7 +127,8 @@ export interface PrescriptionJourneyProps {
 }
 
 export function PrescriptionJourney({
-  aiEnabled,
+  photoEnabled,
+  aiFallback,
   simulatedReader,
   loggedIn,
   initialItems,
@@ -135,12 +142,13 @@ export function PrescriptionJourney({
 
   const [lines, setLines] = useState<Line[]>(() => fromInitial(initialItems));
   const [manual, setManual] = useState(
-    !aiEnabled || depart === 'saisie' || initialItems.length > 0,
+    !photoEnabled || depart === 'saisie' || initialItems.length > 0,
   );
   const [photo, setPhoto] = useState<PhotoStep>({ kind: 'capture' });
   const [reading, setReading] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [readMessage, setReadMessage] = useState<{ tone: 'info' | 'warning'; text: string } | null>(
-    aiEnabled
+    photoEnabled
       ? null
       : {
           tone: 'info',
@@ -251,67 +259,117 @@ export function PrescriptionJourney({
     }
   }
 
+  function applyReading(res: { readId: string; lines: ReadLine[]; simulated: boolean }) {
+    const next: Line[] = res.lines.map((l) => ({
+      key: newKey(),
+      productId: l.productId,
+      label: l.productLabel,
+      readName: [l.name, l.dosage].filter(Boolean).join(' '),
+      quantity: l.quantity,
+      confidence: l.confidence,
+      candidates: l.candidates,
+      toCheck: l.toCheck,
+      changing: false,
+      corrected: false,
+    }));
+    setLines((ls) => [...ls, ...next].slice(0, MAX_LINES));
+    setReadId(res.readId);
+    setPhoto({ kind: 'done' });
+    setReadMessage({
+      tone: 'info',
+      text: `${res.simulated ? 'Lecture de démonstration. ' : ''}${
+        next.some((l) => l.toCheck)
+          ? 'Vérifiez la liste : corrigez les lignes « À vérifier » et les quantités.'
+          : 'Vérifiez la liste et les quantités avant de continuer.'
+      }`,
+    });
+    requestAnimationFrame(() => linesRef.current?.focus());
+  }
+
+  function readFailed(err: unknown) {
+    const code = err instanceof ApiError ? err.code : '';
+    // La photo est effacée dans tous les cas d'échec.
+    setPhoto({ kind: 'capture' });
+    if (code === 'AI_UNAVAILABLE' || code === 'AI_QUOTA_REACHED') setManual(true);
+    setReadMessage({
+      tone: 'warning',
+      text: errorMessage(
+        err,
+        'Nous n’arrivons pas à lire la photo. Rapprochez-vous et refaites-la en pleine lumière.',
+      ),
+    });
+  }
+
+  /** Lecture par l'IA côté serveur (démonstration, ou secours si activée). */
+  async function readWithAi(source: Source, rect: CropRect) {
+    const blob = await cropAndCompress(source, rect);
+    const form = new FormData();
+    form.append('photos', blob, 'ordonnance.jpg');
+    return postForm<{ readId: string; lines: ReadLine[]; simulated: boolean }>(
+      '/api/prescriptions/read',
+      form,
+    );
+  }
+
   async function send(rect: CropRect) {
     if (photo.kind !== 'review' || reading) return;
     setReading(true);
     setReadMessage(null);
-    let blob: Blob;
+    setProgress(null);
+    const source = photo.source;
     try {
-      blob = await cropAndCompress(photo.source, rect);
-    } catch {
-      setReading(false);
-      setReadMessage({
-        tone: 'warning',
-        text: 'La photo n’a pas pu être préparée. Refaites-la, plus près de la liste.',
-      });
-      return;
-    }
-    const form = new FormData();
-    form.append('photos', blob, 'ordonnance.jpg');
-    try {
-      const res = await postForm<{
-        readId: string;
-        lines: ReadLine[];
-        simulated: boolean;
-      }>('/api/prescriptions/read', form);
-      const next: Line[] = res.lines.map((l) => ({
-        key: newKey(),
-        productId: l.productId,
-        label: l.productLabel,
-        readName: [l.name, l.dosage].filter(Boolean).join(' '),
-        quantity: l.quantity,
-        confidence: l.confidence,
-        candidates: l.candidates,
-        toCheck: l.toCheck,
-        changing: false,
-        corrected: false,
-      }));
-      setLines((ls) => [...ls, ...next].slice(0, MAX_LINES));
-      setReadId(res.readId);
-      setPhoto({ kind: 'done' });
-      setReadMessage({
-        tone: 'info',
-        text: `${res.simulated ? 'Lecture de démonstration. ' : ''}${
-          next.some((l) => l.toCheck)
-            ? 'Vérifiez la liste : corrigez les lignes « À vérifier » et les quantités.'
-            : 'Vérifiez la liste et les quantités avant de continuer.'
-        }`,
-      });
-      requestAnimationFrame(() => linesRef.current?.focus());
+      if (simulatedReader) {
+        applyReading(await readWithAi(source, rect));
+        return;
+      }
+      // 1. Lecture du texte dans le téléphone : la photo ne quitte pas l'appareil.
+      let text = '';
+      let durationMs = 0;
+      const canvas = cropForReading(source, rect);
+      try {
+        ({ text, durationMs } = await readTextOnDevice(canvas, (r) =>
+          setProgress(Math.round(r * 100)),
+        ));
+      } finally {
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+      setProgress(null);
+      // 2. Rapprochement du texte avec le catalogue (le texte n'est pas gardé).
+      try {
+        applyReading(
+          await publicApi<{ readId: string; lines: ReadLine[]; simulated: boolean }>(
+            '/api/prescriptions/match',
+            { method: 'POST', body: { text, durationMs } },
+          ),
+        );
+      } catch (err) {
+        // 3. Rien reconnu : l'IA en secours si elle est activée.
+        if (aiFallback && err instanceof ApiError && err.code === 'UNREADABLE') {
+          applyReading(await readWithAi(source, rect));
+        } else {
+          throw err;
+        }
+      }
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : '';
-      // La photo est effacée dans tous les cas d'échec.
-      setPhoto({ kind: 'capture' });
-      if (code === 'AI_UNAVAILABLE' || code === 'AI_QUOTA_REACHED') setManual(true);
-      setReadMessage({
-        tone: 'warning',
-        text: errorMessage(
-          err,
-          'Nous n’arrivons pas à lire la photo. Rapprochez-vous et refaites-la en pleine lumière.',
-        ),
-      });
+      if (err instanceof PhotoFormatError) {
+        setPhoto({ kind: 'capture' });
+        setReadMessage({
+          tone: 'warning',
+          text: 'La photo n’a pas pu être préparée. Refaites-la, plus près de la liste.',
+        });
+      } else if (err instanceof ApiError) {
+        readFailed(err);
+      } else {
+        setPhoto({ kind: 'capture' });
+        setReadMessage({
+          tone: 'warning',
+          text: 'La lecture n’a pas pu se faire sur ce téléphone. Réessayez avec une connexion stable, ou saisissez vos médicaments.',
+        });
+      }
     } finally {
       setReading(false);
+      setProgress(null);
     }
   }
 
@@ -403,7 +461,7 @@ export function PrescriptionJourney({
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
       {/* Bloc 1 : la photo */}
-      {aiEnabled && manual && !hasList && (
+      {photoEnabled && manual && !hasList && (
         <button
           type="button"
           className="type-label flex min-h-11 items-center gap-2 self-start text-action hover:underline"
@@ -414,12 +472,12 @@ export function PrescriptionJourney({
         </button>
       )}
       {/* En saisie manuelle, la photo ne revient que si le patient la demande. */}
-      {aiEnabled && (!manual || photo.kind !== 'capture') && (
+      {photoEnabled && (!manual || photo.kind !== 'capture') && (
         <Block n={1} title="La photo">
           {photo.kind === 'capture' && (
             <>
-              <p className="type-body flex gap-2 rounded-field bg-mint-soft/60 p-4 text-ink">
-                <ShieldCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-action" />
+              <p className="type-body flex gap-2 rounded-field border border-error/20 bg-error-soft p-4 text-ink">
+                <ShieldCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-error" />
                 <span>
                   Photographiez uniquement la liste des médicaments et les quantités. Le nom du
                   patient et celui du médecin ne doivent pas apparaître.
@@ -440,6 +498,11 @@ export function PrescriptionJourney({
               imageUrl={photo.url}
               initialRect={DEFAULT_BAND}
               sending={reading}
+              sendingLabel={
+                progress === null
+                  ? 'Lecture de vos médicaments…'
+                  : `Lecture de la photo… ${progress} %`
+              }
               note={photo.note}
               onConfirm={(rect) => void send(rect)}
               onRetake={() => setPhoto({ kind: 'capture' })}
@@ -475,12 +538,12 @@ export function PrescriptionJourney({
       {/* Bloc 2 : la liste, puis la position */}
       {showList && (
         <Block
-          n={aiEnabled ? 2 : 1}
+          n={photoEnabled ? 2 : 1}
           title="Vos médicaments"
           headingRef={linesRef}
           error={errors.lines}
         >
-          {readMessage && (readMessage.tone === 'info' || !aiEnabled) && (
+          {readMessage && (readMessage.tone === 'info' || !photoEnabled) && (
             <Message tone={readMessage.tone} title={readMessage.text} />
           )}
           {simulatedReader && readId && (
@@ -519,7 +582,7 @@ export function PrescriptionJourney({
           )}
           {readId && (
             <p className="type-caption text-ink-muted">
-              L’IA aide à lire l’ordonnance ; votre pharmacien la valide.
+              La lecture automatique aide à lire l’ordonnance ; votre pharmacien la valide.
             </p>
           )}
 

@@ -9,7 +9,7 @@ import { prisma } from '@/lib/server/prisma';
 export const metadata: Metadata = { title: 'Ordonnances' };
 
 const SOURCE: Record<string, string> = {
-  PHOTO: 'Photo lue par l’IA',
+  PHOTO: 'Photo lue',
   MANUAL: 'Saisie à la main',
   NAME: 'Recherche par nom',
 };
@@ -116,7 +116,10 @@ export default async function AdminPrescriptionsPage() {
         </div>
       </KpiPanel>
 
-      <KpiPanel title="Lectures par l’IA" subtitle="Durée, lignes lues et corrigées, coût estimé">
+      <KpiPanel
+        title="Lectures de photos"
+        subtitle="Dans le téléphone (gratuit) ou par l’IA en secours : durée, lignes lues et corrigées, coût estimé"
+      >
         {reads.length === 0 ? (
           <p className="type-body-small text-ink-muted">Aucune lecture pour le moment.</p>
         ) : (
